@@ -16,19 +16,14 @@
 #include <fstream>
 #include <learning/Dataset.h>
 #include <naryTree.h>
+#include <fixed_bimap.h>
 #include "Hierarchy.h"
-
-
-#define         GET_ENTITY_ID(i)            ((i)*2)
-#define         GET_CATEGORY_ID(i)          ((i)*2+1)
 
 class EEEngine {
 public:
-    EEEngine(DistMetricMode metric, const size_t dim_embedding);
-
+    EEEngine(DistMetricMode metric, const size_t dim_embedding, naryTree &tree,
+             fixed_bimap<std::string, size_t> &bimap);
     ~EEEngine();
-
-    void Start();
 
     // for analysis
     Hierarchy &entity_category_hierarchy() {
@@ -37,10 +32,6 @@ public:
 
     inline int num_entity() { return num_entity_category; }
 
-    //Dataset &train_data() { return train_data_; }
-
-//private:    // private functions
-
     // TODO: Given a the current batch, all the negative samples are the pairs of the objects that are not within the hierarchy
     //void SampleNegEntities(Datum &datum);
 
@@ -48,18 +39,8 @@ public:
     /*void ThreadCreateMinibatch(const std::vector<int> &next_minibatch_data_idx,
                                std::vector<Datum> &next_minibatch);*/
 
-    /*inline void CopyMinibatch(const std::vector<Datum*>& source,
-                              std::vector<Datum*>& target);
-    inline void ClearMinibatch(std::vector<Datum*>& minibatch);*/
 
-    void ReadEntityCategoryFile(size_t num_entities_and_categories);
-
-    //void ReadEntityAncestorFile_txt(const std::string &filename);
-
-    // for neg sampling
-    void BuildNoiseDistribution();
-
-    //int RandSampleNegEntity();
+    void InitEntityCategories(size_t num_entities_and_categories);
 
     Hierarchy entity_category_hierarchy_;
 
@@ -72,19 +53,10 @@ public:
     void ReadHierarchyIdWithLevel(naryTree &tree, size_t levelId = 0);
 
 private:
-
-    //Dataset train_data_;
-    //Dataset test_data_;
-    int num_train_data_;
-    //int num_test_data_;
-
-
-    int32_t num_neg_sample_;
+    size_t num_neg_sample_;
     size_t num_entity_category;
-
-    // for neg sampling
-    //std::vector<double> entity_freq_;
-    double freq_sum_;
+    naryTree& treeRef;
+    fixed_bimap<std::string, size_t>& bijection;
 };
 
 

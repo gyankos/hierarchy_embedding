@@ -16,13 +16,14 @@
 #include <stdint.h>
 #include <utility>
 #include <learning/Path.h>
+#include <fixed_bimap.h>
 #include "learning/Node.h"
 
 
     class Hierarchy {
         DistMetricMode m; size_t dim_embedding;
     public:
-        Hierarchy(DistMetricMode m, size_t dimEmbedding);
+        Hierarchy(DistMetricMode m, size_t dimEmbedding, fixed_bimap <std::string, size_t>& bimap);
         ~Hierarchy() {};
 
         Path FindPathBetweenEntities(int entity_from, int entity_to);
@@ -37,13 +38,9 @@
         //const std::map<int, float>& entity_ancestor_weights(const int entity_idx);
 
     private:
+    // Using the bijection to determine which is the common ancestor for the two elements, eventually the root
         void FindCommonAncestors(int entity_from, int entity_to,
                                  std::set<int>& common_ancestors);
-
-        //void FindCommonAncestors(const int entity_from, const int entity_to,
-        //    map<int, int>& entity_from_ancestor_weights,
-        //    map<int, int>& entity_to_ancestor_weights,
-        //    set<int>& common_ancestors);
 
         void ExpandPathFromCommonAncestors(const int entity_idx, const std::set<int> &common_ancestors, Path &path);
 
@@ -61,6 +58,7 @@
         // each entry map<int, vector<int> > is:
         // ancestor_category_idx => child category idx of entity's ancestor
         std::vector<std::map<size_t , std::vector<size_t>>> entity_ancestor_hierarchies_;
+        fixed_bimap<std::string, size_t>& bijection;
 
         //int num_entity_;
         //int num_category_;

@@ -3,7 +3,8 @@
 //
 
 #include <queue>
-#include "Hierarchy.h"
+#include <string_utils.h>
+#include "learning/Hierarchy.h"
 
 /**
  * TODO: the implementation of the path-finding method is incomplete.
@@ -86,9 +87,18 @@ void Hierarchy::ExpandPathFromCommonAncestors(const int entity_idx, const std::s
  */
 void Hierarchy::FindCommonAncestors(int entity_from, int entity_to,
                                     std::set<int>& common_ancestors) {
-#if 1
-    throw new std::runtime_error("ERROR: not implemented function");
-#else
+
+    const std::vector<size_t> &from = string_split_to_sizetvector(bijection.getKey(entity_from), "_");
+    const std::vector<size_t> &to = string_split_to_sizetvector(bijection.getKey(entity_to), "_");
+    std::vector<size_t> ancestor;
+    for (size_t i = 0, n = std::min(from.size(), to.size()); i<n; i++) {
+        if (from[i] == to[i]) {
+            ancestor.emplace_back(from[i]);
+        } else
+            break;
+    }
+    common_ancestors.emplace(bijection.getValue(size_vector_to_string(ancestor)));
+#if 0
     /*// for speedup
     if (entity_ancestor_weights_[entity_from].size() < entity_ancestor_weights_[entity_to].size()) {
         int tmp = entity_to;
@@ -150,7 +160,8 @@ void Hierarchy::FindCommonAncestors(int entity_from, int entity_to,
 #endif
 }
 
-Hierarchy::Hierarchy(DistMetricMode m, size_t dimEmbedding) : m(m), dim_embedding(dimEmbedding) {}
+Hierarchy::Hierarchy(DistMetricMode m, size_t dimEmbedding, fixed_bimap<std::string, size_t>& bimap)
+        : m(m), dim_embedding(dimEmbedding), bijection{bimap} {}
 
 void Hierarchy::InitHierarchy(int num_entity_and_category) {
     //Node *node;

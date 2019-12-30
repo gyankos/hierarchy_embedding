@@ -2,7 +2,7 @@
 #include <vector>
 #include <proposal/Proposal.h>
 #include "cout_utils.h"
-#include "EEE_Engine.h"
+#include "learning/EEE_Engine.h"
 #include <concept_vector/TestingBasic1.h>
 #include <concept_vector/TestingBasic2.h>
 #include <concept_vector/TestingBasic3.h>
@@ -76,7 +76,6 @@ int main() {
     double distanceFactor = 3;
     int decayFactor = 2;
     size_t maximumHeight = 3;
-    EEEngine engine{EDIAG, maximumBranchingFactor};
 
     std::cout << "Generating the complete tree" << std::endl;
     naryTree tree{0};
@@ -87,6 +86,8 @@ int main() {
     fixed_bimap<std::string, size_t>             bimap;             // Bijection between path as a string and the id
     std::set<std::string> allNodes;                                 // Containing all the nodes within the hierarchy
 
+    // Adding the root node
+    bimap.put("", 0);
     for (auto& element : generateCompleteSubgraph(maximumBranchingFactor, maximumHeight)) {
         for (auto& x : element.get()) {
             std::string x_val = size_vector_to_string(x);
@@ -96,14 +97,17 @@ int main() {
                 positiveExamples[x_val].emplace(y_val);
                 positiveExamples[y_val].emplace(x_val);
             }
-            bimap.put(x_val, id);
+            // Getting the id of the new element that is now added: id
             num_entities_and_classes += tree.addChild(x, id);
+            // Adding the id of the associated element, and associating that to the string. That is going ot be used to determine the best common ancestor.
+            bimap.put(x_val, id);
         }
     }
 
     // Init category hierarchy
+    EEEngine engine{EDIAG, maximumBranchingFactor, tree, bimap};
     engine.entity_category_hierarchy_.InitHierarchy(num_entities_and_classes);
-    engine.ReadEntityCategoryFile(num_entities_and_classes);
+    engine.InitEntityCategories(num_entities_and_classes);
     engine.ReadHierarchyIdWithLevel(tree);
 
     std::cout << "Generating the negative examples" << std::endl;
@@ -114,7 +118,7 @@ int main() {
         std::set_difference(set.begin(), set.end(), allNodes.begin(), allNodes.end(), std::inserter(difference, difference.begin()));
     }
 
-
+    // Finished to generate the
 
     //std::cout << generateAllPossibleSubpaths({1,2,3}) << std::endl;
     //std::cout << test_basic_4(ls) << std::endl;
