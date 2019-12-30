@@ -2,9 +2,12 @@
 #include <vector>
 #include <proposal/Proposal.h>
 #include "cout_utils.h"
+#include "EEE_Engine.h"
 #include <concept_vector/TestingBasic1.h>
 #include <concept_vector/TestingBasic2.h>
 #include <concept_vector/TestingBasic3.h>
+#include <fixed_bimap.h>
+#include <learning/Blob.h>
 
 
 double test_my_implementation(size_t maximumBranchingFactor, size_t distanceFactor, size_t decayFactor, const std::vector<std::vector<size_t>> &ls) {
@@ -40,10 +43,7 @@ double test_my_implementation(size_t maximumBranchingFactor, size_t distanceFact
 
 
 
-
-
-
-int main() {
+void testing_basic_implementation() {
     size_t maximumBranchingFactor = 5;
     double distanceFactor = 3;
     int decayFactor = 2;
@@ -66,6 +66,56 @@ int main() {
 
     TestingBasic3 testingBasic4{maximumBranchingFactor, maximumHeight, 1, 0.5};
     testingBasic4.run(ls);
+};
+
+
+int main() {
+
+
+    size_t maximumBranchingFactor = 5;
+    double distanceFactor = 3;
+    int decayFactor = 2;
+    size_t maximumHeight = 3;
+    EEEngine engine{EDIAG, maximumBranchingFactor};
+
+    std::cout << "Generating the complete tree" << std::endl;
+    naryTree tree{0};
+    size_t id = 0, num_entities_and_classes = 1; //num_entities_and_classes is initialized with 1, because the root will be added automatically
+
+    std::cout << "Generating the positive examples" << std::endl;
+    std::map<std::string, std::set<std::string>> positiveExamples;
+    fixed_bimap<std::string, size_t>             bimap;             // Bijection between path as a string and the id
+    std::set<std::string> allNodes;                                 // Containing all the nodes within the hierarchy
+
+    for (auto& element : generateCompleteSubgraph(maximumBranchingFactor, maximumHeight)) {
+        for (auto& x : element.get()) {
+            std::string x_val = size_vector_to_string(x);
+            allNodes.emplace(x_val);
+            for (auto& y : generateAllPossibleSubpaths(x)) {
+                std::string y_val = size_vector_to_string(y);
+                positiveExamples[x_val].emplace(y_val);
+                positiveExamples[y_val].emplace(x_val);
+            }
+            bimap.put(x_val, id);
+            num_entities_and_classes += tree.addChild(x, id);
+        }
+    }
+
+    // Init category hierarchy
+    engine.entity_category_hierarchy_.InitHierarchy(num_entities_and_classes);
+    engine.ReadEntityCategoryFile(num_entities_and_classes);
+    engine.ReadHierarchyIdWithLevel(tree);
+
+    std::cout << "Generating the negative examples" << std::endl;
+    std::map<std::string, std::set<std::string>> negativeExamples;
+    for (const std::string& x : allNodes) {
+        const std::set<std::string>& set = positiveExamples[x];
+        std::set<std::string>& difference = negativeExamples[x];
+        std::set_difference(set.begin(), set.end(), allNodes.begin(), allNodes.end(), std::inserter(difference, difference.begin()));
+    }
+
+
+
     //std::cout << generateAllPossibleSubpaths({1,2,3}) << std::endl;
     //std::cout << test_basic_4(ls) << std::endl;
     //std::cout << test_my_implementation(maximumBranchingFactor, distanceFactor, decayFactor, ls) << std::endl;

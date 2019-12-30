@@ -19,7 +19,6 @@ public:
 
     void AddCategoryNode(const int category_id, const float weight);
 
-    void ScaleCategoryWeights(const double scale, const double scale_2);
     double scale_2() const { return scale_2_; }
 
     std::vector<size_t>& category_nodes() { return category_nodes_; }

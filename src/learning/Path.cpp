@@ -21,13 +21,6 @@ void Path::AddCategoryNode(const int category_id, const float weight) {
     category_node_weights_[category_id] += weight;
 }
 
-void Path::ScaleCategoryWeights(const double scale, const double scale_2) {
-    for (auto it = category_node_weights_.begin(); it != category_node_weights_.end(); ++it) {
-        it->second *= scale * scale_2; //weighted
-    }
-    scale_2_ = scale_2;
-}
-
 double Path::category_node_weight(size_t category_id) const {
     return category_node_weights_.find(category_id)->second;
 }

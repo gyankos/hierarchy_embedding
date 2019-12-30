@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cmath>
 
+// CONCEPT VECTOR FOR SIMILARITY MEASUREMENT BASED ON HIERARCHICAL DOMAIN STRUCTURE
 class ConceptVector {
 public:
     static std::vector<double> relevancy_vector(naryTree& tree, const std::vector<size_t>& path);

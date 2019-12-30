@@ -2,6 +2,7 @@
 // Created by giacomo on 29/12/19.
 //
 
+#if 0
 #include "learning/Dataset.h"
 
 Dataset::Dataset(DistMetricMode metric, const size_t dim_embedding) : metric{metric} , dim_embedding{dim_embedding} {
@@ -30,3 +31,4 @@ const std::set<int> &Dataset::positive_entities(const int entity_i) {
 void Dataset::AddPair(const int entity_i, const int entity_o) {
     entity_pairs_[entity_i].insert(entity_o);
 }
+#endif

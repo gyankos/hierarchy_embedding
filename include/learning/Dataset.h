@@ -4,6 +4,7 @@
 
 #ifndef HIERARCHY_TESTS_DATASET_H
 #define HIERARCHY_TESTS_DATASET_H
+#if 0
 
 #include <set>
 #include <map>
@@ -37,7 +38,7 @@ private:
     // < (entity_i, entity_o) >
     std::vector<std::pair<int, int> > data_;
     // < count >
-    std::vector<int> count_;
+    //std::vector<int> count_;
 
     // entity_i => (entitiy_o => path)
     //map<int, map<int, Path*> > entity_pair_path_;
@@ -45,5 +46,5 @@ private:
     std::map<int, std::set<int> > entity_pairs_;
     std::set<int> empty_set_;
 };
-
+#endif
 #endif //HIERARCHY_TESTS_DATASET_H
