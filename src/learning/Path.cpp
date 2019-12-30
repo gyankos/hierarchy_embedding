@@ -24,7 +24,7 @@ void Path::AddCategoryNode(const int category_id, const float weight) {
 double Path::category_node_weight(size_t category_id) const {
     return category_node_weights_.find(category_id)->second;
 }
-
+/*
 Path::Path(const Path &x) : category_nodes_{x.category_nodes_}, category_node_weights_{x.category_node_weights_}, aggr_dist_metric_{x.aggr_dist_metric_} {
     scale_2_ = x.scale_2_;
 }
@@ -35,3 +35,4 @@ Path &Path::operator=(const Path &x) {
     aggr_dist_metric_ = x.aggr_dist_metric_;
     scale_2_ = x.scale_2_;
 }
+*/

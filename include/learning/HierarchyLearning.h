@@ -31,12 +31,12 @@ struct Entity {
 class HierarchyLearning {
     std::vector<Entity> entities;
 
-    double freq_sum_;
+    //double freq_sum_;
     double learning_rate = 0.100000001;
-    double kRandInitRange = 0.05;
+    //double kRandInitRange = 0.05;
     double kEpsilon = 1e-20;
-    size_t num_neg_sample = 50;
-    size_t num_epoch_on_batch = 1, num_iter_on_entity = 1, num_iter_on_category = 1, dim_embedding = 100;
+    //size_t num_neg_sample = 50;
+    size_t num_epoch_on_batch = 10, num_iter_on_entity = 5, num_iter_on_category = 5, dim_embedding;
     size_t num_entity, num_category;
     std::vector<Blob> entity_grads, category_grads, entitiesB, categoriesB;
 
@@ -46,12 +46,20 @@ class HierarchyLearning {
 
 public:
     HierarchyLearning(DistMetricMode m, size_t dimEmbedding, size_t numEntity, size_t numCategory);
-    
-    
+    HierarchyLearning&operator=(const HierarchyLearning&) = default;
+    HierarchyLearning(const HierarchyLearning&) = default;
+
+    void  Solve_single(std::vector<Datum>& minibatch);
+    double ComputeObjective_single(std::vector<Datum>& val_batch);
+
+    std::vector<Blob> copyCategories() {
+        return categoriesB;
+    }
+
+    double ComputeDist(const size_t entity_from, const size_t entity_to,const Path& path);
 
 private:
 
-    void  Solve_single(std::vector<Datum>& minibatch);
     void ComputeEntityGradient(Datum& datum);
     void AccumulateEntityGradient(const double coeff,
                                   const Blob& dist_metric, const size_t entity_from, const size_t entity_to,
@@ -61,8 +69,7 @@ private:
                                     const int entity_from, const int entity_to, Blob& grad);
     void SGDUpdateEntity(const double lr);
     void SGDUpdateCategory(const double lr);
-    double ComputeDist(const size_t entity_from, const size_t entity_to,const Path& path);
-    double ComputeObjective_single(std::vector<Datum>& val_batch);
+
     void BuildNoiseDistribution();
 };
 

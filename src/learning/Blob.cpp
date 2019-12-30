@@ -23,7 +23,7 @@ Blob::Blob(DistMetricMode metric, const size_t num_row, const size_t num_col)
                 throw std::runtime_error("Unknown metric mode");
         }
     }
-    data_.reserve(count_);
+    data_.resize(count_);
     ClearData();
 }
 

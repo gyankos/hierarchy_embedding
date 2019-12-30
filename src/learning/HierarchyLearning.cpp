@@ -8,12 +8,12 @@
 double fastsigmoid(const double x) { return (double)0.5 * (Tanh::getInstance().fasttanh(0.5 * x) + 1.); }
 
 void HierarchyLearning::BuildNoiseDistribution() {
-    freq_sum_ = std::pow(entities[0].frequency, 1.33333333);
+    /*freq_sum_ = 1.0;
     for (int e_id = 1; e_id < entities.size(); ++e_id) {
-        entities[e_id].frequency_updated = std::pow(entities[e_id].frequency, 1.33333333);
+        entities[e_id].frequency_updated = 1.0;
         entities[e_id].frequency_updated += entities[e_id - 1].frequency_updated;
-    }
-    freq_sum_ = entities[entities.size()-1].frequency_updated;
+    }*/
+    //freq_sum_ = entities.size();
 }
 
 void HierarchyLearning::SGDUpdateCategory(const double lr) {
@@ -105,6 +105,7 @@ HierarchyLearning::HierarchyLearning(DistMetricMode m, size_t dimEmbedding, size
         }
     }
 
+    BuildNoiseDistribution();
 }
 
 void
@@ -117,15 +118,19 @@ HierarchyLearning::AccumulateCategoryGradient(const float coeff, const int entit
 
 void HierarchyLearning::Solve_single(std::vector<Datum> &minibatch) {
     float update_coeff = learning_rate / minibatch.size();
-    for (int epoch = 0; epoch < num_epoch_on_batch; ++epoch) {
-        // Refresh path aggregated distance metric
+    for (size_t epoch = 0; epoch < num_epoch_on_batch; ++epoch) {
+        // 1) Metric aggregation (lines 4 -- 8)
         for (int d = 0; d < minibatch.size(); ++d) {
+            // Postive data metric aggregation
             minibatch[d].category_path().RefreshAggrDistMetric(categoriesB);
+
+            // Negative samples metric aggregation
             std::vector<Path>& neg_category_paths = minibatch[d].neg_category_paths();
             for (int p_idx = 0; p_idx < neg_category_paths.size(); ++p_idx) {
                 neg_category_paths[p_idx].RefreshAggrDistMetric(categoriesB);
             }
         }
+
         // Optimize entity embedding
         for (int iter = 0; iter < num_iter_on_entity; ++iter) {
             for (int d = 0; d < minibatch.size(); ++d) {
@@ -146,7 +151,7 @@ void HierarchyLearning::Solve_single(std::vector<Datum> &minibatch) {
                     updated_entities_.insert(datum.entity_i());
                     updated_entities_.insert(datum.entity_o());
                 }
-                for (int neg_idx = 0; neg_idx < num_neg_sample; ++neg_idx) {
+                for (int neg_idx = 0; neg_idx < datum.neg_category_paths().size(); ++neg_idx) {
                     entity_grads[datum.neg_entity(neg_idx)].Accumulate(datum.neg_entity_grad(neg_idx), 1.0);
                     if (epoch == 0 && iter == 0) {
                         updated_entities_.insert(datum.neg_entity(neg_idx));
@@ -190,18 +195,8 @@ void HierarchyLearning::Solve_single(std::vector<Datum> &minibatch) {
             } // end of minibatch
 
             /// Update category metrics
-            //if (solver_type_ == SolverType::SGD) {
             SGDUpdateCategory(update_coeff);
-            /*} else if (solver_type_ == SolverType::MOMEN) {
-                MomenUpdateCategory(update_coeff);
-            } else if (solver_type_ == SolverType::ADAGRAD) {
-                AdaGradUpdateCategory(update_coeff);
-            } else {
-                LOG(FATAL) << "Unkown Solver Type " << solver_type_;
-            }*/
-
-        } // end of optimizing category embedding
-        //LOG(ERROR) << "optimize cate vector done.";
+        }
     } // end of epoches
 
     updated_entities_.clear();
@@ -221,7 +216,7 @@ void HierarchyLearning::ComputeEntityGradient(Datum &datum) {
     datum.entity_o_grad().CopyFrom(entity_i_grad, -1.0);
 
     // neg_samples
-    for (int neg_idx = 0; neg_idx < num_neg_sample; ++neg_idx) {
+    for (int neg_idx = 0; neg_idx < datum.neg_category_paths().size(); ++neg_idx) {
         Blob& neg_entity_grad = datum.neg_entity_grad(neg_idx);
         coeff = 1.0 - fastsigmoid(ComputeDist(
                 entity_i, datum.neg_entity(neg_idx),
@@ -232,7 +227,7 @@ void HierarchyLearning::ComputeEntityGradient(Datum &datum) {
                 entity_i, datum.neg_entity(neg_idx), neg_entity_grad);
     }
     // Accumulate (-1) * gradient_on_neg_samples to gradient_on_e_i
-    for (int neg_idx = 0; neg_idx < num_neg_sample; ++neg_idx) {
+    for (int neg_idx = 0; neg_idx < datum.neg_category_paths().size(); ++neg_idx) {
         entity_i_grad.Accumulate(datum.neg_entity_grad(neg_idx), -1.0);
     }
 }
@@ -254,7 +249,7 @@ void HierarchyLearning::ComputeCategoryGradient(Datum &datum) {
     }
 
     // process (e_i, negative samples)
-    for (int path_idx = 0; path_idx < num_neg_sample; ++path_idx) {
+    for (int path_idx = 0; path_idx < datum.neg_category_paths().size(); ++path_idx) {
         Path &neg_path = datum.neg_category_path(path_idx);
         const std::vector<size_t>& neg_category_nodes = neg_path.category_nodes();
         const int neg_entity = datum.neg_entity(path_idx);
@@ -279,7 +274,7 @@ double HierarchyLearning::ComputeObjective_single(std::vector<Datum> &val_batch)
         int entity_i = datum.entity_i();
         datum_obj += log(std::max(kEpsilon, fastsigmoid((-1.0) * ComputeDist(
                 entity_i, datum.entity_o(), datum.category_path()))));
-        for (int neg_idx = 0; neg_idx < num_neg_sample; ++neg_idx) {
+        for (int neg_idx = 0; neg_idx < datum.neg_category_paths().size(); ++neg_idx) {
             datum.neg_category_path(neg_idx).RefreshAggrDistMetric(categoriesB);
             datum_obj += log(std::max(kEpsilon, fastsigmoid(ComputeDist(
                     entity_i, datum.neg_entity(neg_idx),

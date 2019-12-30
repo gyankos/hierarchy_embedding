@@ -4,8 +4,9 @@
 
 #include "learning/Datum.h"
 
-Datum::Datum(DistMetricMode metric, const size_t dim_embedding, const int entity_i, const int entity_o, const int count,
-             const int num_neg_sample) : m{metric}, entity_i_(entity_i), dim_embedding{dim_embedding}, category_path_{metric, dim_embedding},
+Datum::Datum(DistMetricMode metric, const size_t dim_embedding, const size_t entity_i, const size_t entity_o,
+             const size_t num_neg_sample, const size_t count)
+        : m{metric}, entity_i_(entity_i), dim_embedding{dim_embedding}, category_path_{metric, dim_embedding},
                                          entity_o_(entity_o), count_(count), entity_i_grad_{metric, dim_embedding}, entity_o_grad_{metric, dim_embedding} {
     neg_entity_id_.resize(num_neg_sample);
     //neg_entity_grads_.resize(num_neg_sample);

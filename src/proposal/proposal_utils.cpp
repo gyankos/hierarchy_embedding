@@ -3,7 +3,8 @@
 //
 
 #include <algorithm>
-#include <thread_pool.h>
+#include <multithreaded/thread_pool.h>
+#include <multithreaded/MultithreadWrap.h>
 #include "proposal/proposal_utils.h"
 
 int indexOfSubList(std::vector<size_t> &array, std::vector<size_t> &subarray) {
@@ -56,23 +57,34 @@ bool subArrayOf(std::vector<size_t> &array, std::vector<size_t> &subarray) {
     return indexOfSubList(array, subarray) == 0;
 }
 
-std::vector<std::future<std::vector<std::vector<size_t>> >> generateCompleteSubgraph(size_t maximumBranchingFactor, size_t maximumHeight) {
+
+
+std::vector<std::vector<std::vector<size_t>> > generateCompleteSubgraph(size_t maximumBranchingFactor, size_t maximumHeight) {
     std::vector<std::future<std::vector<std::vector<size_t>> >> futures;
     unsigned int nthreads = std::thread::hardware_concurrency() / 2;
-    thread_pool pool(nthreads);
+    MultithreadWrap<std::vector<std::vector<size_t>>> wrapper{nthreads, IS_MULTITHREADED};
+    //thread_pool pool(nthreads);
     if (maximumBranchingFactor > 0) {
         for (size_t i = 1; i<=maximumBranchingFactor; i++) {
-            futures.push_back(pool.execute([maximumBranchingFactor, maximumHeight](size_t i) {
+            /*futures.push_back(pool.execute([maximumBranchingFactor, maximumHeight](size_t i) {
                 std::vector<std::vector<size_t>>  result;
                 std::vector<size_t> current;
                 current.emplace_back(i);
                 result.emplace_back(current);
                 generateCompleteSubgraph(result, maximumHeight-1, maximumBranchingFactor, current);
                 return result;
-                }, i));
+                }, i));*/
+            wrapper.poolExecute([maximumBranchingFactor, maximumHeight](size_t i) {
+                std::vector<std::vector<size_t>>  result;
+                std::vector<size_t> current;
+                current.emplace_back(i);
+                result.emplace_back(current);
+                generateCompleteSubgraph(result, maximumHeight-1, maximumBranchingFactor, current);
+                return result;
+            }, i);
         }
     }
-    return futures;
+    return wrapper.foreach();
 }
 
 double euclideanDistance(std::vector<double> &left, std::vector<double> &right) {

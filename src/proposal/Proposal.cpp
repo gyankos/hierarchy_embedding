@@ -7,7 +7,7 @@
 Proposal::Proposal(double maximumBranchingFactor, double distanceFactor, double decayFactor) : maximumBranchingFactor(
         maximumBranchingFactor), distanceFactor(distanceFactor), decayFactor(decayFactor) {}
 
-std::vector<double> Proposal::fromHierarchyVectorToEuclideanVector(std::vector<size_t> &hierarchyVector) {
+std::vector<double> Proposal::fromHierarchyVectorToEuclideanVector(const std::vector<size_t> &hierarchyVector) {
     std::vector<double> d;
     d.resize(maximumBranchingFactor, 0.0);
     double currentDecay = 1.0;
@@ -19,7 +19,7 @@ std::vector<double> Proposal::fromHierarchyVectorToEuclideanVector(std::vector<s
     return d;
 }
 
-double Proposal::thresholdValue(std::vector<size_t> &left, std::vector<size_t> &right) {
+double Proposal::thresholdValue(const std::vector<size_t> &left, const std::vector<size_t> &right) {
     int h2 = left.size(), h1 = right.size();
     if (h2 < h1) {
         int tmp = h2;
@@ -29,12 +29,12 @@ double Proposal::thresholdValue(std::vector<size_t> &left, std::vector<size_t> &
     return distanceFactor * (std::pow(decayFactor, h2-h1+1) - 1.0) / (std::pow(decayFactor, h2) * (decayFactor - 1.0));
 }
 
-double Proposal::distance(std::vector<size_t> &left, std::vector<size_t> &right) {
+double Proposal::distance(const std::vector<size_t> &left, const std::vector<size_t> &right) {
     auto l = fromHierarchyVectorToEuclideanVector(left);
     auto r = fromHierarchyVectorToEuclideanVector(right);
     return euclideanDistance(l, r);
 }
 
-bool Proposal::isConsistent(std::vector<size_t> &left, std::vector<size_t> &right) {
+bool Proposal::isConsistent(const std::vector<size_t> &left, const std::vector<size_t> &right) {
     return distance(left, right) <= thresholdValue(left, right);
 }

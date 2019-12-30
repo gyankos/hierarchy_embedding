@@ -21,7 +21,6 @@
 
 
     class Hierarchy {
-        DistMetricMode m; size_t dim_embedding;
     public:
         Hierarchy(DistMetricMode m, size_t dimEmbedding, fixed_bimap <std::string, size_t>& bimap);
         ~Hierarchy() {};
@@ -37,6 +36,8 @@
 
         //const std::map<int, float>& entity_ancestor_weights(const int entity_idx);
 
+        DistMetricMode m;
+        size_t dim_embedding;
     private:
     // Using the bijection to determine which is the common ancestor for the two elements, eventually the root
         void FindCommonAncestors(int entity_from, int entity_to,

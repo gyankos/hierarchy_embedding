@@ -11,9 +11,9 @@
 class Path {
 public:
     Path(DistMetricMode m, size_t dim_embedding) : aggr_dist_metric_(m, dim_embedding, dim_embedding) {};
-    Path(const Path& x);
+    Path(const Path& x) = default;
 
-    Path& operator=(const Path& x);
+    Path& operator=(const Path& x) = default;
 
     void RefreshAggrDistMetric(const std::vector<Blob>& categories);
 

@@ -22,7 +22,8 @@ protected:
     void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) override;;
     std::vector<double> getVectorRepresentation(const std::vector<size_t>& current);
     double similarity(const std::vector<double>& lhs, const std::vector<double>& rhs) override;
-    void generateTopKCandidates(PollMap<double,std::string>& map, const std::vector<size_t>& current);;
+    void generateTopKCandidates(PollMap<double,std::string>& map, const std::vector<size_t>& current);
+    void finalizeDataIngestion() override {}
 };
 
 /*

@@ -2,7 +2,7 @@
 // Created by giacomo on 29/12/19.
 //
 
-#include "concept_vector/TestingBasic1.h"
+#include "tests/TestingBasic1.h"
 #include "concept_vector/ConceptVector.h"
 #include <math_utils.h>
 
@@ -27,7 +27,7 @@ void TestingBasic1::generateTopKCandidates(PollMap<double, std::string> &map, co
     const std::vector<double>& currentVector = getVectorRepresentation(current);
     for (auto & it : keyValueMap) {
         //if (it.first != currentString) {
-        double  score = similarity(currentVector, it.second);
+        //double  score = similarity(currentVector, it.second);
         // std::cout << "sim(" << currentString << "," << it.first << ")=" << score << std::endl ;
         map.add(similarity(currentVector, it.second), it.first);
         //}

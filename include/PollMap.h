@@ -169,6 +169,17 @@ public:
         }
     }
 
+    void printNarrow() {
+        doSanitize();
+        for (K k : getTopKKeys()) {
+            std::cout << k << " = {";
+            for (const V& x : poll[k]) {
+                std::cout << x << " ";
+            }
+            std::cout << "}" << std::endl;
+        }
+    }
+
 private:
     void doSanitize() {
         if (!sanitize) {

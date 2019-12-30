@@ -10,7 +10,7 @@
 #include <future>
 
 int indexOfSubList(std::vector<size_t>& array, std::vector<size_t>& subarray);
-std::vector<std::future<std::vector<std::vector<size_t>> >> generateCompleteSubgraph(size_t maximumBranchingFactor, size_t maximumHeight);
+std::vector<std::vector<std::vector<size_t>>> generateCompleteSubgraph(size_t maximumBranchingFactor, size_t maximumHeight);
 bool subArrayOf(std::vector<size_t>& array, std::vector<size_t>& subarray);
 
 /**

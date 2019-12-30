@@ -9,12 +9,14 @@
 #include <string>
 #include <proposal/proposal_utils.h>
 #include <string_utils.h>
+#include <cout_utils.h>
 #include <map>
 #include <set>
 #include <iostream>
+#include <multithreaded/MultithreadWrap.h>
 #include "PollMap.h"
 #include "stats_utils.h"
-#include "thread_pool.h"
+#include "multithreaded/thread_pool.h"
 
 #define         DEBUG           (false)
 
@@ -30,8 +32,10 @@ struct result_map {
 
 template <typename ForComparison>
 class Testing {
+protected:
     size_t maximumBranchingFactor, maximumHeight;
 
+private:
     double Spearman(const std::vector<size_t>& current, const std::vector<std::vector<size_t>> &candidates) {
         std::set<std::string> candidatesSet;
         double noCandidates = candidates.size();
@@ -45,7 +49,7 @@ class Testing {
             currentRankMap[tmp] = candidates.size() - y.size() + 1;
         }
 
-        //if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
+        if (DEBUG) std::cout << "Spearman Candidates: " << candidatesSet << " for element " << current << std::endl;
         PollMap<double,std::string> pollMap{candidatesSet.size()};
         generateTopKCandidates(pollMap, current);
         pollMap.getRankedPoll(toretMap);
@@ -72,7 +76,7 @@ class Testing {
             currentRankMap[tmp] =  y.size();
         }
 
-        //if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
+        if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
         PollMap<double,std::string> pollMap{candidatesSet.size()};
         generateTopKCandidates(pollMap, current);
         const std::map<double, std::set<std::string>> &poll = pollMap.getPoll();
@@ -92,7 +96,7 @@ class Testing {
             currentRankMap[tmp] = candidates.size() - y.size() + 1;
         }
 
-        //if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
+        if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
         PollMap<double,std::string> pollMap{candidatesSet.size()};
         generateTopKCandidates(pollMap, current);
         std::multimap<double, std::string> mmap;
@@ -118,7 +122,7 @@ class Testing {
             currentRankMap[tmp] = candidates.size() - y.size() + 1;
         }
 
-        //if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
+        if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
         double currentlyGot = 0.0;
         PollMap<double,std::string> pollMap{candidatesSet.size()};
         generateTopKCandidates(pollMap, current);
@@ -126,7 +130,7 @@ class Testing {
 
         for (auto& cp : toretMap) {
             if (candidatesSet.find(cp.first) != candidatesSet.end()) {
-                //std::cout << "<" << cp.first << ", " << cp.second << ">" << std::endl;
+                //std::cout << "<" << cp.first << ", " << cp.second << "> = " << std::endl;
                 retrieved += 1.0;
             }
             currentlyGot += 1.0;
@@ -135,10 +139,6 @@ class Testing {
         //std::cout << std::endl;
         return retrieved / currentlyGot;
     }
-
-public:
-    Testing(size_t maximumBranchingFactor, size_t maximumHeight) : maximumBranchingFactor(maximumBranchingFactor),
-                                                                   maximumHeight(maximumHeight) {}
 
 
     std::pair<double,double> minmaxCandidates(const std::vector<size_t>& current, const std::vector<std::vector<std::vector<size_t>>>& z, const std::vector<std::vector<size_t>> &candidates) {
@@ -190,23 +190,34 @@ public:
     }
 
 
+public:
+    Testing(size_t maximumBranchingFactor, size_t maximumHeight) : maximumBranchingFactor(maximumBranchingFactor),
+                                                                   maximumHeight(maximumHeight) {}
+
+
+
 
     void run(std::vector<std::vector<std::vector<size_t>>>& ls) {
         // Generating all the possible nodes for the hierarchy of choice
         //const std::vector<std::vector<size_t>> &ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
         std::cout << "Tree Generation" << std::endl;
+        initialize_hierarchy_with_all_paths({{}});
         for (auto& element : ls)
             initialize_hierarchy_with_all_paths(element);
+        finalizeDataIngestion();
 
         double path_length_size = 0, spearman = 0,  precision = 0,  precision_narrow = 0, ncdg = 0, smallerNotCandidate = 0, recall =0;
 
-        std::vector<std::future<struct result_map >> futures;
-        thread_pool pool(ls.size());
+        MultithreadWrap<struct result_map> pool{(unsigned int)ls.size(), IS_MULTITHREADED};
+
+        //std::vector<std::future<struct result_map >> futures;
+        //thread_pool pool(ls.size());
 
         std::cout << "Now Computing..." << std::endl;
         // Performing the test for each node in the hierarchy, root excluded
         for (auto& y: ls) {
-            futures.push_back(pool.execute([this, ls](const std::vector<std::vector<size_t>>& y) {
+            pool.poolExecute
+            /*futures.push_back(pool.execute*/([this, ls](const std::vector<std::vector<size_t>>& y) {
                 struct result_map maps;
 
                 for (auto& x : y) {
@@ -233,14 +244,12 @@ public:
                 }
 
                 return maps;
-            }, y));
+            }, y);
         }
 
-
-
         std::cout << "Summing up the maps..." << std::endl;
-        for (auto& y : futures) {
-            auto x = y.get();
+        for (auto& x : pool.foreach()) {
+            //auto x = y.get();
 #define update_local(field, currFuture)           (field) += currFuture .  field
             update_local(path_length_size, x);
             update_local(spearman, x);
@@ -250,9 +259,7 @@ public:
             update_local(recall, x);
             update_local(smallerNotCandidate, x);
         }
-        futures.clear();
-
-
+        //futures.clear();
 
         std::cout << "Spearman, for top-k                                              " << spearman / path_length_size << std::endl;
         //print_result_maps(path_length_size, spearman);
@@ -264,7 +271,7 @@ public:
         //print_result_maps(path_length_size, precision_narrow);
     }
 
-    void
+    /*void
     print_result_maps(const std::map<size_t, double> &keys_with_sizes,
                       const std::map<size_t, double> &keys_with_values) const {
         for(auto it_m1 = keys_with_sizes.cbegin(), end_m1 = keys_with_sizes.cend(),
@@ -273,13 +280,14 @@ public:
         {
             std::cout << it_m1->first << " = " << it_m2->second / it_m1->second << std::endl;
         }
-    }
+    }*/
 
 protected:
     virtual void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) = 0;
     virtual ForComparison getVectorRepresentation(const std::vector<size_t>& current) = 0;
     virtual double similarity(const ForComparison& lhs, const ForComparison& rhs) = 0;
     virtual void  generateTopKCandidates(PollMap<double,std::string>& map, const std::vector<size_t>& current) = 0;
+    virtual void finalizeDataIngestion() = 0;
 };
 
 

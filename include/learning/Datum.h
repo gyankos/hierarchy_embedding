@@ -11,9 +11,11 @@
 class Datum {
 public:
     // must call AddPath() to finish initialization
-    Datum(DistMetricMode metric, const size_t dim_embedding, const int entity_i, const int entity_o, const int count,
-          const int num_neg_sample);
+    Datum(DistMetricMode metric, const size_t dim_embedding, const size_t entity_i, const size_t entity_o,
+          const size_t num_neg_sample = 0, const size_t count = 1);
 
+
+    Datum() : Datum{FULL, 100, 0, 0} {}
 
     void AddPath(Path& path);
 

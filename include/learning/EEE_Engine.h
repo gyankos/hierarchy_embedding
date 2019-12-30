@@ -10,20 +10,22 @@
 #pragma once
 
 #include <vector>
-#include <stdint.h>
 #include <utility>
 #include <iostream>
 #include <fstream>
-#include <learning/Dataset.h>
 #include <naryTree.h>
 #include <fixed_bimap.h>
+#include <learning/Datum.h>
 #include "Hierarchy.h"
 
 class EEEngine {
 public:
-    EEEngine(DistMetricMode metric, const size_t dim_embedding, naryTree &tree,
-             fixed_bimap<std::string, size_t> &bimap);
+    EEEngine(DistMetricMode metric, const size_t dim_embedding, naryTree &tree, fixed_bimap<std::string, size_t> &bimap,
+             size_t num_entity_category);
     ~EEEngine();
+
+    EEEngine&operator=(const EEEngine&) = default;
+    EEEngine(const EEEngine&) = default;
 
     // for analysis
     Hierarchy &entity_category_hierarchy() {
@@ -40,7 +42,7 @@ public:
                                std::vector<Datum> &next_minibatch);*/
 
 
-    void InitEntityCategories(size_t num_entities_and_categories);
+    void InitEntityCategories();
 
     Hierarchy entity_category_hierarchy_;
 
@@ -51,6 +53,19 @@ public:
      * @param levelId           Level id from which the visit is started: initially zero if the tree is the tree node.
      */
     void ReadHierarchyIdWithLevel(naryTree &tree, size_t levelId = 0);
+    void ReadHierarchyIdWithLevel();
+
+    /**
+     * Generates the testing data using the positive examples (the elements within the hierarchy) and the negative
+     * examples (the elements not in the hierarchy). In particular, Each pair of tests is a base element and a testing
+     * element. The negative examples are the set of all the negative examples shared by both the base and the testing
+     * element.
+     *
+     * @param positiveMap
+     * @param negativeMap
+     * @return
+     */
+    std::vector<Datum> generateData(std::map<std::string, std::set<std::string>> &positiveMap, std::map<std::string, std::set<std::string>> &negativeMap);
 
 private:
     size_t num_neg_sample_;

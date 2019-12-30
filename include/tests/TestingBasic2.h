@@ -9,23 +9,22 @@
 #include "Testing.h"
 #include <naryTree.h>
 
-class TestingBasic2 : public Testing<std::vector<double>>  {
-
-std::map<std::string, std::vector<double>> keyValueMap;
-naryTree tree{0};
-size_t nodes = 0;
-size_t id = 0;
-double beta;
+class TestingBasic2 : public Testing<std::vector<double>> {
+    std::map<std::string, std::vector<double>> keyValueMap;
+    naryTree tree{0};
+    size_t nodes = 0;
+    size_t id = 0;
+    double beta;
 
 public:
-TestingBasic2(size_t maximumBranchingFactor, size_t maximumHeight, double beta);
+    TestingBasic2(size_t maximumBranchingFactor, size_t maximumHeight, double beta);
 
 protected:
-
-void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) override;;
-std::vector<double> getVectorRepresentation(const std::vector<size_t>& current);
-double similarity(const std::vector<double>& lhs, const std::vector<double>& rhs) override;
-void generateTopKCandidates(PollMap<double,std::string>& map, const std::vector<size_t>& current);;
+    void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) override;;
+    std::vector<double> getVectorRepresentation(const std::vector<size_t> &current);
+    double similarity(const std::vector<double> &lhs, const std::vector<double> &rhs) override;
+    void generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current);;
+    void finalizeDataIngestion()override {}
 };
 
 /*

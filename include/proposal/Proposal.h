@@ -36,7 +36,7 @@ public:
      * @param hierarchyVector   Vector expressed as in the Petermann paper
      * @return
      */
-    std::vector<double> fromHierarchyVectorToEuclideanVector(std::vector<size_t>& hierarchyVector);
+    std::vector<double> fromHierarchyVectorToEuclideanVector(const std::vector<size_t> &hierarchyVector);
 
     /**
      * Distance threshold values for two given elements
@@ -44,14 +44,14 @@ public:
      * @param right
      * @return
      */
- double thresholdValue(std::vector<size_t>& left, std::vector<size_t >& right);
+ double thresholdValue(const std::vector<size_t> &left, const std::vector<size_t> &right);
 
     /**
      * @param left      Hierarchy vector
      * @param right     Hierarchy vector
      * @return          Distance
      */
- double distance(std::vector<size_t>& left, std::vector<size_t >& right);
+ double distance(const std::vector<size_t> &left, const std::vector<size_t> &right);
 
     /**
      * This distance is defined as follows: isConsistent(left, right) <=> subArrayOf(left,right) || subArrayOf(right,left)
@@ -60,7 +60,11 @@ public:
      * @param right   path index vector
      * @return   Whether the two elements are consistent or not.
      */
- bool isConsistent(std::vector<size_t>& left, std::vector<size_t >& right);
+ bool isConsistent(const std::vector<size_t> &left, const std::vector<size_t> &right);
+
+ double rankingMetric(const std::vector<size_t>& left, const std::vector<size_t >& right) {
+     return isConsistent(left, right) ? distance(left, right) : std::numeric_limits<double>::max();
+ }
 
 };
 
