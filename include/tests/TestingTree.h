@@ -2,8 +2,8 @@
 // Created by giacomo on 29/12/19.
 //
 
-#ifndef HIERARCHY_TESTS_TESTING_H
-#define HIERARCHY_TESTS_TESTING_H
+#ifndef HIERARCHY_TESTS_TESTINGTREE_H
+#define HIERARCHY_TESTS_TESTINGTREE_H
 
 #include <vector>
 #include <string>
@@ -14,6 +14,7 @@
 #include <set>
 #include <iostream>
 #include <multithreaded/MultithreadWrap.h>
+#include <cassert>
 #include "PollMap.h"
 #include "stats_utils.h"
 #include "multithreaded/thread_pool.h"
@@ -21,17 +22,17 @@
 #define         DEBUG           (false)
 
 struct result_map {
-    double path_length_size;
-    double spearman;
-    double precision;
-    double precision_narrow;
-    double ncdg;
-    double recall;
-    double smallerNotCandidate;
+    double path_length_size = 0;
+    double spearman = 0;
+    double precision = 0;
+    double precision_narrow = 0;
+    double ncdg = 0;
+    double recall = 0;
+    double smallerNotCandidate = 0;
 };
 
 template <typename ForComparison>
-class Testing {
+class TestingTree {
 protected:
     size_t maximumBranchingFactor, maximumHeight;
 
@@ -102,11 +103,14 @@ private:
         std::multimap<double, std::string> mmap;
         pollMap.getPoll(mmap);
         double noCandidates = mmap.size();
+        std::set<std::string> k;
         for (auto it = mmap.rbegin(); it != mmap.rend(); it++) {
             if (candidatesSet.find(it->second) != candidatesSet.end()) {
-                retrieved+=1.0;
+                if(k.insert(it->second).second)
+                    retrieved+=1.0;
             }
         }
+        assert(retrieved <= noCandidates);
         return retrieved / noCandidates;
     }
 
@@ -127,16 +131,20 @@ private:
         PollMap<double,std::string> pollMap{candidatesSet.size()};
         generateTopKCandidates(pollMap, current);
         pollMap.getNarrowRankedPoll(toretMap);
+        std::set<std::string> k;
 
         for (auto& cp : toretMap) {
             if (candidatesSet.find(cp.first) != candidatesSet.end()) {
+                if (k.insert(cp.first).second)
+                    retrieved += 1.0;
                 //std::cout << "<" << cp.first << ", " << cp.second << "> = " << std::endl;
-                retrieved += 1.0;
+
             }
             currentlyGot += 1.0;
             //if (DEBUG) std::cout << "<" << cp.first << ", " << cp.second << ">" << std::endl;
         }
         //std::cout << std::endl;
+        assert(retrieved <= currentlyGot);
         return retrieved / currentlyGot;
     }
 
@@ -156,7 +164,7 @@ private:
         }
 
         std::string currentStirng = size_vector_to_string(current);
-        for (auto& candidates : z) {
+        for (const std::vector<std::vector<size_t>>& candidates : z) {
             for (auto &x : candidates) {
                 std::string x_tmp = size_vector_to_string(x);
                 if (x_tmp != currentStirng) {
@@ -186,13 +194,13 @@ private:
                 recallToBeZero += 1.0;
         }
 
-        return std::make_pair(recallToBeZero/candidatesSet.size(), 1.0/(1.0+maxCandidates.size()));
+        return std::make_pair(recallToBeZero/minCandidates.size(), maxCandidates.size()/(1.0+maxCandidates.size()));
     }
 
 
 public:
-    Testing(size_t maximumBranchingFactor, size_t maximumHeight) : maximumBranchingFactor(maximumBranchingFactor),
-                                                                   maximumHeight(maximumHeight) {}
+    TestingTree(size_t maximumBranchingFactor, size_t maximumHeight) : maximumBranchingFactor(maximumBranchingFactor),
+                                                                       maximumHeight(maximumHeight) {}
 
 
 
@@ -257,7 +265,7 @@ public:
             update_local(precision_narrow, x);
             update_local(ncdg, x);
             update_local(recall, x);
-            update_local(smallerNotCandidate, x);
+            //update_local(smallerNotCandidate, x);
         }
         //futures.clear();
 
@@ -267,7 +275,7 @@ public:
         //print_result_maps(path_length_size, precision);
         std::cout << "Precision, for top-k elements                                    " << precision_narrow / path_length_size << std::endl;
         std::cout << "Recall, for non top-k elements (wrongly matching the candidates) " << recall / path_length_size << std::endl;
-        std::cout << "More similar than worst top-1 not candidate, not current element " << smallerNotCandidate / path_length_size << std::endl;
+        //std::cout << "More similar than worst top-1 not candidate, not current element " << smallerNotCandidate / path_length_size << std::endl;
         //print_result_maps(path_length_size, precision_narrow);
     }
 
@@ -291,4 +299,4 @@ protected:
 };
 
 
-#endif //HIERARCHY_TESTS_TESTING_H
+#endif //HIERARCHY_TESTS_TESTINGTREE_H

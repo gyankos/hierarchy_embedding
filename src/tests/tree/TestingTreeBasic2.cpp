@@ -2,15 +2,15 @@
 // Created by giacomo on 29/12/19.
 //
 
-#include "tests/TestingBasic2.h"
+#include "tests/tree/TestingTreeBasic2.h"
 #include "concept_vector/ConceptVector.h"
 #include <math_utils.h>
 
-TestingBasic2::TestingBasic2(size_t maximumBranchingFactor, size_t maximumHeight, double beta)
-        : Testing{maximumBranchingFactor, maximumHeight},
+TestingTreeBasic2::TestingTreeBasic2(size_t maximumBranchingFactor, size_t maximumHeight, double beta)
+        : TestingTree{maximumBranchingFactor, maximumHeight},
           beta(beta) {}
 
-void TestingBasic2::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) {
+void TestingTreeBasic2::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) {
     for (const std::vector<size_t> &x: ls) {
         size_t tmp = tree.addChild(x, id);
 //std::cout << x <<  "    " << tmp << std::endl ;
@@ -22,13 +22,13 @@ void TestingBasic2::initialize_hierarchy_with_all_paths(const std::vector<std::v
     }
 }
 
-std::vector<double> TestingBasic2::getVectorRepresentation(const std::vector<size_t> &current) {
+std::vector<double> TestingTreeBasic2::getVectorRepresentation(const std::vector<size_t> &current) {
     return keyValueMap[size_vector_to_string(current)];
 }
 
-double TestingBasic2::similarity(const std::vector<double> &lhs, const std::vector<double> &rhs) { return cosine_similarity(lhs, rhs); }
+double TestingTreeBasic2::similarity(const std::vector<double> &lhs, const std::vector<double> &rhs) { return cosine_similarity(lhs, rhs); }
 
-void TestingBasic2::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
+void TestingTreeBasic2::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
     std::string currentString{size_vector_to_string(current)};
     const std::vector<double>& currentVector = getVectorRepresentation(current);
     for (auto & it : keyValueMap) {

@@ -2,11 +2,11 @@
 // Created by giacomo on 29/12/19.
 //
 
-#include "tests/TestingBasic1.h"
+#include "tests/tree/TestingTreeBasic1.h"
 #include "concept_vector/ConceptVector.h"
 #include <math_utils.h>
 
-void TestingBasic1::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) {
+void TestingTreeBasic1::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) {
     for (const std::vector<size_t> &x: ls) {
         size_t tmp = tree.addChild(x, id);
         //std::cout << x <<  "    " << tmp << std::endl ;
@@ -18,11 +18,11 @@ void TestingBasic1::initialize_hierarchy_with_all_paths(const std::vector<std::v
     }
 }
 
-std::vector<double> TestingBasic1::getVectorRepresentation(const std::vector<size_t> &current) {
+std::vector<double> TestingTreeBasic1::getVectorRepresentation(const std::vector<size_t> &current) {
     return keyValueMap[size_vector_to_string(current)];
 }
 
-void TestingBasic1::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
+void TestingTreeBasic1::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
     std::string currentString{size_vector_to_string(current)};
     const std::vector<double>& currentVector = getVectorRepresentation(current);
     for (auto & it : keyValueMap) {
@@ -34,6 +34,6 @@ void TestingBasic1::generateTopKCandidates(PollMap<double, std::string> &map, co
     }
 }
 
-double TestingBasic1::similarity(const std::vector<double> &lhs, const std::vector<double> &rhs) { return cosine_similarity(lhs, rhs); }
+double TestingTreeBasic1::similarity(const std::vector<double> &lhs, const std::vector<double> &rhs) { return cosine_similarity(lhs, rhs); }
 
-TestingBasic1::TestingBasic1(size_t maximumBranchingFactor, size_t maximumHeight) : Testing{maximumBranchingFactor, maximumHeight} {}
+TestingTreeBasic1::TestingTreeBasic1(size_t maximumBranchingFactor, size_t maximumHeight) : TestingTree{maximumBranchingFactor, maximumHeight} {}

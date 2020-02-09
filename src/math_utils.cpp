@@ -8,7 +8,6 @@ std::vector<double> operator+(const std::vector<double> &lhs, const std::vector<
     std::vector<double> toret;
     const size_t lS = lhs.size(), rS = rhs.size();
     const size_t M = std::max(lS, rS);
-    toret.resize(M);
     for (size_t i = 0; i<M; i++) {
         if (i<lS && i<rS) {
             toret.emplace_back(lhs[i]+rhs[i]);
@@ -52,6 +51,11 @@ double cosine_similarity(const std::vector<double> &lhs, const std::vector<doubl
     }
     return score / (std::sqrt(normL)*std::sqrt(normR));
 
+}
+
+std::vector<double> operator+=(std::vector<double> &lhs, const std::vector<double> &rhs) {
+    lhs = lhs+rhs;
+    return lhs;
 }
 
 Tanh &Tanh::getInstance() {

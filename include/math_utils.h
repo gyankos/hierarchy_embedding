@@ -10,6 +10,7 @@
 #include <cmath>
 
 std::vector<double> operator+(const std::vector<double>& lhs, const std::vector<double>& rhs);
+std::vector<double> operator+=(std::vector<double>& lhs, const std::vector<double>& rhs);
 std::vector<double> VectorPow(const std::vector<double>& lhs, double exp);
 
 // MatrixVectorMultiply

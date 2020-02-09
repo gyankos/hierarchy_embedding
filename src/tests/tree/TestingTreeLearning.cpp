@@ -2,16 +2,16 @@
 // Created by giacomo on 30/12/19.
 //
 
-#include "tests/TestingLearning.h"
+#include "tests/tree/TestingTreeLearning.h"
 
-TestingLearning::TestingLearning(size_t maximumBranchingFactor, size_t maximumHeight, size_t vectorDimension)
-        : Testing(maximumBranchingFactor,
-                  maximumHeight), dimEmbedding(vectorDimension <= 0 ? std::max((size_t)2, maximumBranchingFactor) : vectorDimension) {
+TestingTreeLearning::TestingTreeLearning(size_t maximumBranchingFactor, size_t maximumHeight, size_t vectorDimension)
+        : TestingTree(maximumBranchingFactor,
+                      maximumHeight), dimEmbedding(vectorDimension <= 0 ? std::max((size_t)2, maximumBranchingFactor) : vectorDimension) {
     ee_engine_ = nullptr;
     trainer = nullptr;
 }
 
-void TestingLearning::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &element) {
+void TestingTreeLearning::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &element) {
     for (auto& x : element/*.get()*/) {
         std::string x_val = size_vector_to_string(x);
         allNodes.emplace(x_val);
@@ -27,7 +27,7 @@ void TestingLearning::initialize_hierarchy_with_all_paths(const std::vector<std:
     }
 }
 
-void TestingLearning::finalizeDataIngestion() {
+void TestingTreeLearning::finalizeDataIngestion() {
     // Init category hierarchy
     std::cout << "Initializing the EEEL Engine with some tweaks" << std::endl;
     ee_engine_ = new EEEngine(FULL, dimEmbedding, tree, bimap, num_entities_and_classes);
@@ -53,17 +53,17 @@ void TestingLearning::finalizeDataIngestion() {
     //std::cout << trainer.ComputeObjective_single(batch) << std::endl;
 }
 
-size_t TestingLearning::getVectorRepresentation(const std::vector<size_t> &current) {
+size_t TestingTreeLearning::getVectorRepresentation(const std::vector<size_t> &current) {
     return bimap.getValue(size_vector_to_string(current));
 }
 
-double TestingLearning::similarity(const size_t &lhs, const size_t &rhs) {
+double TestingTreeLearning::similarity(const size_t &lhs, const size_t &rhs) {
     Path path = ee_engine_->entity_category_hierarchy().FindPathBetweenEntities(lhs, rhs);
     path.RefreshAggrDistMetric(trainer->copyCategories());
     return trainer->ComputeDist(lhs, rhs, path);
 }
 
-void TestingLearning::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
+void TestingTreeLearning::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
     size_t  entity = getVectorRepresentation(current);
     for (size_t e_id = 0; e_id < num_entities_and_classes; ++e_id) {
         double dist = similarity(entity, e_id);
@@ -129,11 +129,11 @@ void testing_learning_method() {
         trainer.Solve_single(batch);
     std::cout << trainer.ComputeObjective_single(batch) << std::endl;
 #endif
-    size_t maximumBranchingFactor = 5;
+    size_t maximumBranchingFactor = 4;
     double distanceFactor = 3;
     int decayFactor = 2;
 
-    size_t maximumHeight = 4;
+    size_t maximumHeight = 3;
 
     // TODO: lightweight
     /*size_t maximumBranchingFactor = 2;
@@ -142,15 +142,15 @@ void testing_learning_method() {
 
      size_t maximumHeight = 2;*/
     std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
-    TestingLearning testing_dimension_as_branching{maximumBranchingFactor, maximumHeight, maximumBranchingFactor};
+    TestingTreeLearning testing_dimension_as_branching{maximumBranchingFactor, maximumHeight, 7};
     testing_dimension_as_branching.run(ls);
 
-    TestingLearning testing_dimension_mid_branching_100{maximumBranchingFactor, maximumHeight,
-                                                        (maximumBranchingFactor + 100) / 2};
+    TestingTreeLearning testing_dimension_mid_branching_100{maximumBranchingFactor, maximumHeight,
+                                                            50};
     testing_dimension_mid_branching_100.run(ls);
 
-    TestingLearning testing_dimension_100{maximumBranchingFactor, maximumHeight, 100};
-    testing_dimension_100.run(ls);
+    /*TestingLearning testing_dimension_100{maximumBranchingFactor, maximumHeight, 100};
+    testing_dimension_100.run(ls);*/
 }
 
 void batch_learning(const std::vector<Datum> &batch, HierarchyLearning &trainer, int iterations) {

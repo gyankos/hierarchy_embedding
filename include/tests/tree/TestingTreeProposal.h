@@ -2,17 +2,17 @@
 // Created by giacomo on 30/12/19.
 //
 
-#ifndef HIERARCHY_TESTS_TESTINGPROPOSAL_H
-#define HIERARCHY_TESTS_TESTINGPROPOSAL_H
+#ifndef HIERARCHY_TESTS_TESTINGTREEPROPOSAL_H
+#define HIERARCHY_TESTS_TESTINGTREEPROPOSAL_H
 
-#include <Testing.h>
+#include <tests/TestingTree.h>
 #include <proposal/Proposal.h>
 
-class TestingProposal : public Testing<std::vector<size_t >> {
+class TestingTreeProposal : public TestingTree<std::vector<size_t >> {
     Proposal prop;
     std::vector<std::vector<size_t>> allPossiblePaths;
 public:
-    TestingProposal(size_t maximumBranchingFactor, double distanceFactor, double decayFactor, size_t  maxHeight);
+    TestingTreeProposal(size_t maximumBranchingFactor, double distanceFactor, double decayFactor, size_t  maxHeight);
 protected:
     void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) override;
     std::vector<size_t> getVectorRepresentation(const std::vector<size_t> &current) override;
@@ -36,4 +36,4 @@ double test_my_implementation(size_t maximumBranchingFactor, size_t distanceFact
 
 void test_my_proposal();;
 
-#endif //HIERARCHY_TESTS_TESTINGPROPOSAL_H
+#endif //HIERARCHY_TESTS_TESTINGTREEPROPOSAL_H

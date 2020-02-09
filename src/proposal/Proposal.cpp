@@ -38,3 +38,7 @@ double Proposal::distance(const std::vector<size_t> &left, const std::vector<siz
 bool Proposal::isConsistent(const std::vector<size_t> &left, const std::vector<size_t> &right) {
     return distance(left, right) <= thresholdValue(left, right);
 }
+
+double Proposal::rankingMetric(const std::vector<size_t> &left, const std::vector<size_t> &right) {
+    return isConsistent(left, right) ? distance(left, right) : std::numeric_limits<double>::max();
+}

@@ -5,13 +5,16 @@
 #ifndef HIERARCHY_TESTS_CONCEPTVECTOR_H
 #define HIERARCHY_TESTS_CONCEPTVECTOR_H
 
-
 #include <vector>
 #include <naryTree.h>
 #include <iostream>
 #include <cmath>
 
-// CONCEPT VECTOR FOR SIMILARITY MEASUREMENT BASED ON HIERARCHICAL DOMAIN STRUCTURE
+/**
+ * This class generates the vectors as outlined by the following paper:
+ *
+ * CONCEPT VECTOR FOR SIMILARITY MEASUREMENT BASED ON HIERARCHICAL DOMAIN STRUCTURE
+ */
 class ConceptVector {
 public:
     static std::vector<double> relevancy_vector(naryTree& tree, const std::vector<size_t>& path);

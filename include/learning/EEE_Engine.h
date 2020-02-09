@@ -7,6 +7,8 @@
 
 // Author: Zhi-Ting Hu, Po-Yao Huang
 // Date: 2014.10.26
+// Author: Giacomo bergami
+// Date: 2019.12.29
 #pragma once
 
 #include <vector>

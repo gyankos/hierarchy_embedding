@@ -44,7 +44,7 @@ public:
     }
     void init_data_at(const double init_val, const size_t r, const size_t c = 0);
 
-    inline void ClearData();
+    void ClearData();
 
     void CopyFrom(const Blob& source, const double coeff = 1.0);
 
@@ -57,7 +57,7 @@ public:
     void Rectify();
 
 private:
-    inline size_t offset(const size_t r, const size_t c) const;
+    size_t offset(const size_t r, const size_t c) const;
 
 
 private:

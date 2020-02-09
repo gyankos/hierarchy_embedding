@@ -2,17 +2,17 @@
 // Created by giacomo on 30/12/19.
 //
 
-#ifndef HIERARCHY_TESTS_TESTINGLEARNING_H
-#define HIERARCHY_TESTS_TESTINGLEARNING_H
+#ifndef HIERARCHY_TESTS_TESTINGTREELEARNING_H
+#define HIERARCHY_TESTS_TESTINGTREELEARNING_H
 
-#include <Testing.h>
+#include <tests/TestingTree.h>
 #include <naryTree.h>
 #include <fixed_bimap.h>
 #include <learning/EEE_Engine.h>
 #include <learning/HierarchyLearning.h>
 
 
-class TestingLearning : public Testing<size_t> {
+class TestingTreeLearning : public TestingTree<size_t> {
     naryTree tree{0};
     size_t id = 0, num_entities_and_classes = 1; //num_entities_and_classes is initialized with 1, because the root will be added automatically
 
@@ -26,9 +26,9 @@ class TestingLearning : public Testing<size_t> {
 
 
 public:
-    TestingLearning(size_t maximumBranchingFactor, size_t maximumHeight, size_t vectorDimension);
+    TestingTreeLearning(size_t maximumBranchingFactor, size_t maximumHeight, size_t vectorDimension);
 
-    ~TestingLearning() {
+    ~TestingTreeLearning() {
         delete ee_engine_;
         delete trainer;
     }
@@ -48,4 +48,4 @@ void testing_learning_method();
 void batch_learning(const std::vector<Datum> &batch, HierarchyLearning &trainer, int iterations);
 
 
-#endif //HIERARCHY_TESTS_TESTINGLEARNING_H
+#endif //HIERARCHY_TESTS_TESTINGTREELEARNING_H

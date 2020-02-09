@@ -2,22 +2,22 @@
 // Created by giacomo on 30/12/19.
 //
 
-#include "tests/TestingProposal.h"
+#include "tests/tree/TestingTreeProposal.h"
 
-TestingProposal::TestingProposal(size_t maximumBranchingFactor, double distanceFactor, double decayFactor,
-                                 size_t maxHeight) : Testing{maximumBranchingFactor, maxHeight}, prop{(double)maximumBranchingFactor, distanceFactor, decayFactor} {}
+TestingTreeProposal::TestingTreeProposal(size_t maximumBranchingFactor, double distanceFactor, double decayFactor,
+                                         size_t maxHeight) : TestingTree{maximumBranchingFactor, maxHeight}, prop{(double)maximumBranchingFactor, distanceFactor, decayFactor} {}
 
-void TestingProposal::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) {
+void TestingTreeProposal::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) {
     allPossiblePaths.insert(allPossiblePaths.end(), subgraph_as_paths.begin(), subgraph_as_paths.end()); // Copying the possible paths
     //allPossiblePaths = subgraph_as_paths;
     return;
 }
 
-std::vector<size_t> TestingProposal::getVectorRepresentation(const std::vector<size_t> &current) {
+std::vector<size_t> TestingTreeProposal::getVectorRepresentation(const std::vector<size_t> &current) {
     return current;
 }
 
-double TestingProposal::similarity(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
+double TestingTreeProposal::similarity(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
     double distanceMetric =  prop.rankingMetric(lhs, rhs);
     double normalizedDistance = distanceMetric / (1+distanceMetric);
     double similairity = 1 - normalizedDistance;
@@ -25,7 +25,7 @@ double TestingProposal::similarity(const std::vector<size_t> &lhs, const std::ve
     return similairity;
 }
 
-void TestingProposal::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
+void TestingTreeProposal::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
     std::string currentString{size_vector_to_string(current)};
     for (auto & it : allPossiblePaths) {
         //if (it.first != currentString) {
@@ -87,7 +87,7 @@ More similar than worst top-1 not candidate, not current element 0.5
     std::vector<std::vector<std::vector<size_t>> > ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
 
     //size_t maximumBranchingFactor, double distanceFactor, double decayFactor, size_t  maxHeight
-    TestingProposal tepee{maximumBranchingFactor, distanceFactor, (double)decayFactor, maximumHeight};
+    TestingTreeProposal tepee{maximumBranchingFactor, distanceFactor, (double)decayFactor, maximumHeight};
     tepee.run(ls);
 
 }

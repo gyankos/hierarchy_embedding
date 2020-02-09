@@ -62,9 +62,15 @@ public:
      */
  bool isConsistent(const std::vector<size_t> &left, const std::vector<size_t> &right);
 
- double rankingMetric(const std::vector<size_t>& left, const std::vector<size_t >& right) {
-     return isConsistent(left, right) ? distance(left, right) : std::numeric_limits<double>::max();
- }
+ /**
+  * Definition of the ranking distance metric to be used so to discriminate the elements that are not in hierarchy from
+  * the others.
+  *
+  * @param left
+  * @param right
+  * @return
+  */
+ double rankingMetric(const std::vector<size_t>& left, const std::vector<size_t >& right);
 
 };
 

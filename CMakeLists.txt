@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
 project(hierarchy_tests)
-find_package(Threads)
+
+find_package(Threads)                                       #For multithreading
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)                #For par2hier paper using Truncated SVD
+
 set(CMAKE_CXX_STANDARD 17)
 include_directories(include)
 
-add_executable(hierarchy_tests main.cpp src/math_utils.cpp src/learning/HierarchyLearning.cpp src/learning/Blob.cpp src/learning/Datum.cpp src/learning/Path.cpp src/proposal/Proposal.cpp include/proposal/Proposal.h src/proposal/proposal_utils.cpp include/proposal/proposal_utils.h src/naryTree.cpp include/naryTree.h src/concept_vector/ConceptVector.cpp include/concept_vector/ConceptVector.h src/cout_utils.cpp include/cout_utils.h src/string_utils.cpp include/string_utils.h include/Testing.h include/PollMap.h include/stats_utils.h src/multithreaded/thread_pool.cpp include/multithreaded/thread_pool.h src/tests/TestingBasic1.cpp include/tests/TestingBasic1.h src/tests/TestingBasic2.cpp include/tests/TestingBasic2.h src/tests/TestingBasic3.cpp include/tests/TestingBasic3.h src/learning/Dataset.cpp include/learning/Dataset.h src/learning/EEE_Engine.cpp include/learning/EEE_Engine.h src/learning/Hierarchy.cpp include/learning/Hierarchy.h src/learning/Node.cpp include/learning/Node.h include/fixed_bimap.h include/multithreaded/MultithreadWrap.h src/tests/TestingProposal.cpp include/tests/TestingProposal.h src/tests/TestingLearning.cpp include/tests/TestingLearning.h src/tests/TestingBasic.cpp ExternalTesting.cpp ExternalTesting.h)
-target_link_libraries(hierarchy_tests pthread)
+add_subdirectory(submodules/lemon)
+include_directories(submodules/lemon)
+include_directories(cmake-build-debug/submodules/lemon)
+
+add_executable(hierarchy_tests main.cpp src/JLLemma.cpp src/math_utils.cpp src/learning/HierarchyLearning.cpp src/learning/Blob.cpp src/learning/Datum.cpp src/learning/Path.cpp src/proposal/Proposal.cpp include/proposal/Proposal.h src/proposal/proposal_utils.cpp include/proposal/proposal_utils.h src/naryTree.cpp include/naryTree.h src/concept_vector/ConceptVector.cpp include/concept_vector/ConceptVector.h src/cout_utils.cpp include/cout_utils.h src/string_utils.cpp include/string_utils.h include/tests/TestingTree.h include/PollMap.h include/stats_utils.h src/multithreaded/thread_pool.cpp include/multithreaded/thread_pool.h src/tests/tree/TestingTreeBasic1.cpp include/tests/tree/TestingTreeBasic1.h src/tests/tree/TestingTreeBasic2.cpp include/tests/tree/TestingTreeBasic2.h src/tests/tree/TestingTreeBasic3.cpp include/tests/tree/TestingTreeBasic3.h src/learning/Dataset.cpp include/learning/Dataset.h src/learning/EEE_Engine.cpp include/learning/EEE_Engine.h src/learning/Hierarchy.cpp include/learning/Hierarchy.h src/learning/Node.cpp include/learning/Node.h include/fixed_bimap.h include/multithreaded/MultithreadWrap.h src/tests/tree/TestingTreeProposal.cpp include/tests/tree/TestingTreeProposal.h src/tests/tree/TestingTreeLearning.cpp include/tests/tree/TestingTreeLearning.h src/tests/tree/TestingTreeBasic.cpp src/tests/tree/TestingTreeExternal.cpp include/tests/tree/TestingTreeExternal.h src/par2hier/Par2Hier.cpp include/par2hier/Par2Hier.h src/JLLemma.cpp include/JLLemma.h src/Graph.cpp include/Graph.h src/tests/tree/TestingTreePar.cpp include/tests/tree/TestingTreePar.h TestingGraphProposal.cpp TestingGraphProposal.h)
+target_link_libraries(hierarchy_tests pthread Eigen3::Eigen lemon)

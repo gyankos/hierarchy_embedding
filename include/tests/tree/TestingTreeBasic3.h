@@ -2,16 +2,16 @@
 // Created by giacomo on 29/12/19.
 //
 
-#ifndef HIERARCHY_TESTS_TESTINGBASIC3_H
-#define HIERARCHY_TESTS_TESTINGBASIC3_H
+#ifndef HIERARCHY_TESTS_TESTINGTREEBASIC3_H
+#define HIERARCHY_TESTS_TESTINGTREEBASIC3_H
 
 #include <vector>
-#include "Testing.h"
+#include "tests/TestingTree.h"
 #include <naryTree.h>
 
 
 
-class TestingBasic3 : public Testing<std::vector<double>>  {
+class TestingTreeBasic3 : public TestingTree<std::vector<double>>  {
 
     std::map<std::string, std::vector<double>> keyValueMap;
     naryTree tree{0};
@@ -20,7 +20,7 @@ class TestingBasic3 : public Testing<std::vector<double>>  {
     double beta, alpha;
 
 public:
-    TestingBasic3(size_t maximumBranchingFactor, size_t maximumHeight, double beta, double alpha);
+    TestingTreeBasic3(size_t maximumBranchingFactor, size_t maximumHeight, double beta, double alpha);
 
 protected:
 
@@ -70,4 +70,4 @@ double test_basic_4(const std::vector<std::vector<size_t>> &ls) {
 
  */
 
-#endif //HIERARCHY_TESTS_TESTINGBASIC3_H
+#endif //HIERARCHY_TESTS_TESTINGTREEBASIC3_H

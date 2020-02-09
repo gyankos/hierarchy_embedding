@@ -26,7 +26,7 @@
  * @return
  */
 
-inline static double dimension_extimate(size_t dataSize, double epsilon = 0.1);
+double dimension_extimate(size_t dataSize, double epsilon = 0.1);
 
 #if 0
 enum JLProjections {

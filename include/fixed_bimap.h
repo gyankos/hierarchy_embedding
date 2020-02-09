@@ -76,12 +76,15 @@ public:
         oss << "k_" << key;
         std::string keyS = oss.str();
         std::unordered_map<std::string, size_t>::iterator it = map.find(keyS);
-        if ( it != map.cend()) { // =>
+        if ( it == map.cend()) { // =>
             elements.push_back(std::make_pair(key, value));
             vos << "v_" << value;
             map[keyS] = size;
             map[vos.str()] = size;
             size++;
+            return value;
+        } else {
+            return getValue(key);
         }
     }
 

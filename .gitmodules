@@ -1,0 +1,6 @@
+[submodule "submodules/mathtoolbox"]
+	path = submodules/mathtoolbox
+	url = https://github.com/yuki-koyama/mathtoolbox
+[submodule "submodules/lemon"]
+	path = submodules/lemon
+	url = https://github.com/hcorrada/lemon-mirror
