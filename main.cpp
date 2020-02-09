@@ -85,7 +85,7 @@ void testing_learning(size_t maximumBranchingFactor, size_t maximumHeight) {
 #include <unordered_map>
 #include <JLLemma.h>
 #include "Graph.h"
-#include "TestingGraphProposal.h"
+#include "tests/graph/TestingGraphProposal.h"
 
 int main() {
     size_t count = 0;

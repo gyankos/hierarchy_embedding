@@ -17,8 +17,9 @@ class TestingGraphProposal : public TestingGraph<std::vector<std::vector<size_t>
 
 public:
     TestingGraphProposal( double distanceFactor, double decayFactor, Graph &ref) : TestingGraph(ref), distance{distanceFactor}, decay{decayFactor} {}
-
-
+    ~TestingGraphProposal() {
+        delete prop;
+    }
 
 protected:
     std::vector<std::vector<size_t>> getVectorRepresentation(const size_t &current) override {
@@ -31,25 +32,25 @@ protected:
     }
 
     double similarity(const std::vector<std::vector<size_t>> &lhs, const std::vector<std::vector<size_t>> &rhs) override {
-        double similarity = std::numeric_limits<double>::max();
+        double similarity = std::numeric_limits<double>::min();
         for (const auto x : lhs) {
             for (const auto y : rhs) {
                 double distanceMetric =  prop->rankingMetric(x, y);
                 double normalizedDistance = distanceMetric / (1+distanceMetric);
-                double similairity = 1 - normalizedDistance;
+                double local_similairity = 1 - normalizedDistance;
+                similarity = std::max(local_similairity, similarity);
             }
         }
-
         return similarity;
     }
 
-    void generateTopKCandidates(PollMap<double, size_t> &map, const size_t &current) override {
+    /*void generateTopKCandidates(PollMap<double, size_t> &map, const size_t &current) override {
         auto allVectors = getVectorRepresentation(current);
         for (auto & x : this->treeToGraphMorphism) {
             double  score = similarity(allVectors, getVectorRepresentation(x.second));
             map.add(score, x.second);
         }
-    }
+    }*/
 
     void passGraphDataIfRequired(const Graph &graph) override {
         //Now, we can read the data from the graph!

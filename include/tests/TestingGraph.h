@@ -260,7 +260,13 @@ protected:
     /// ???? virtual void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) = 0;
     virtual ForComparison getVectorRepresentation(const size_t& current) = 0;
     virtual double similarity(const ForComparison& lhs, const ForComparison& rhs) = 0;
-    virtual void  generateTopKCandidates(PollMap<double, size_t>& map, const size_t& current) = 0;
+    void  generateTopKCandidates(PollMap<double, size_t>& map, const size_t& current) {
+        auto allVectors = getVectorRepresentation(current);
+        for (auto & x : this->treeToGraphMorphism) {
+            double  score = similarity(allVectors, getVectorRepresentation(x.second));
+            map.add(score, x.second);
+        }
+    }
 
     /**
      * ?????
