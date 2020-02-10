@@ -17,6 +17,8 @@ class TestingTreePar : public TestingTree<std::vector<size_t>> {
     std::vector<std::vector<size_t>> allPossiblePaths;
     Proposal safekeep;
 
+    std::mutex g_pages_mutex;
+
 protected:
     void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) override;
 

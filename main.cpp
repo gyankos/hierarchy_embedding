@@ -6,6 +6,7 @@
 
 
 #include <tests/TestingGraph.h>
+#include <tests/tree/TestingTreePar.h>
 
 /**
  * This generic function computes all the operations in function for all the possibile parameters
@@ -15,8 +16,8 @@
  * @param function
  */
 template <class T> void perform_test(size_t maxBranch, size_t maxHeight, T function) {
-    for (size_t i = 2; i<=maxBranch; i++) {
-        for (size_t j = 2; j<=maxHeight; j++) {
+    for (size_t i =/* 2*/maxBranch; i<=maxBranch; i++) {
+        for (size_t j = /*2*/maxHeight; j<=maxHeight; j++) {
             function(i, j);
         }
     }
@@ -62,10 +63,17 @@ void test_proposal(size_t maximumBranchingFactor, size_t maximumHeight) {
 }
 
 void external_testing(size_t maximumBranchingFactor, size_t maximumHeight) {
-    std::cerr << maximumBranchingFactor << ", " << maximumHeight << std::endl;
-    TestingTreeExternal p{maximumBranchingFactor, maximumHeight, "/media/giacomo/Data/hierarchy_paper/projects/poincare-embeddings/results/usecase_" + std::to_string(maximumBranchingFactor) + "_" + std::to_string(maximumHeight) + ".csv.7pth.txt"};
     std::vector<std::vector<std::vector<size_t>> > ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
-    p.run(ls);
+    std::cout << maximumBranchingFactor << ", " << maximumHeight << " Poincarré@7" << std::endl;
+    {
+        TestingTreeExternal p{maximumBranchingFactor, maximumHeight, "/media/giacomo/Data/hierarchy_paper/projects/poincare-embeddings/results/usecase_" + std::to_string(maximumBranchingFactor) + "_" + std::to_string(maximumHeight) + ".csv.7pth.txt"};
+        p.run(ls);
+    }
+    std::cout << maximumBranchingFactor << ", " << maximumHeight << " Poincarré@50" << std::endl;
+    {
+        TestingTreeExternal p{maximumBranchingFactor, maximumHeight, "/media/giacomo/Data/hierarchy_paper/projects/poincare-embeddings/results/usecase_" + std::to_string(maximumBranchingFactor) + "_" + std::to_string(maximumHeight) + ".csv.50pth.txt"};
+        p.run(ls);
+    }
 }
 
 void testing_learning(size_t maximumBranchingFactor, size_t maximumHeight) {
@@ -80,44 +88,33 @@ void testing_learning(size_t maximumBranchingFactor, size_t maximumHeight) {
     testing_dimension_mid_branching_100.run(ls);
 }
 
+void parhier_testing(size_t maximumBranchingFactor, size_t maximumHeight) {
+    double distanceFactor = 3;
+    double decayFactor = 2;
+
+    auto ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
+    {
+        std::cout << maximumBranchingFactor << ", " << maximumHeight << " ParHierCluster k=3 @" << std::endl;
+        TestingTreePar testing{maximumBranchingFactor, maximumHeight, 3, CLUSTER, 3.0, 2.0};
+        testing.run(ls);
+    }
+    {
+        std::cout << maximumBranchingFactor << ", " << maximumHeight << " ParHierSum k=3 @" << std::endl;
+        TestingTreePar testing{maximumBranchingFactor, maximumHeight, 3, SUM, 3.0, 2.0};
+        testing.run(ls);
+    }
+}
+
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
 #include <JLLemma.h>
+#include <tests/tree/TestingTreeBasic.h>
 #include "Graph.h"
 #include "tests/graph/TestingGraphProposal.h"
 
 int main() {
-    size_t count = 0;
-    fixed_bimap<std::string, size_t> keyId;
-    std::unordered_map<size_t, size_t> branchingEvaluator;
-    size_t maxBranch = std::numeric_limits<size_t >::min();
-    std::ifstream file{"noun.txt"};
-    std::string child, parent;
-    double score;
 
-    Graph g;
-
-    while (file >> child >> parent >> score) {
-        size_t childId, parentId; //ensuring that the root will be the one with id 0
-        if ((parentId = keyId.putWithKeyCheck(parent, count)) == count) {
-            g.addNewNode(count++);
-        }
-        if ((childId = keyId.putWithKeyCheck(child, count)) == count) {
-            g.addNewNode(count++);
-        }
-        auto it = branchingEvaluator.find(parentId);
-        if (it == branchingEvaluator.end()) {
-            maxBranch = std::max(maxBranch, (size_t)1);
-            branchingEvaluator.insert(std::make_pair(parentId, 1));
-        } else {
-            maxBranch = std::max(++it->second, maxBranch);
-        }
-        g.addNewEdge(parentId, childId, score);
-        if (childId == 22708 || parentId == 22708)
-        std::cout << child << "(" << childId <<  ")  --[" << score << "]--> " << parent << "(" << parentId << ")" <<  std::endl;
-    }
-    file.close();
 
 #if 0
     // Correspondence between the node in adj and the node in the graph, so that we can reconstruct all the vectors to be associated to it
@@ -131,10 +128,17 @@ int main() {
     g.generateNaryTree(treeToGraphMorphism, tree, treeIdToPathString);
 #endif
 
+#ifdef CONTINUE
+    std::ifstream file{"noun.txt"};
+    Graph g{file};
+    file.close();
     double distanceFactor = 3;
     double decayFactor = 2;
     TestingGraphProposal proposal(distanceFactor, decayFactor, g);
     proposal.run(false);
+#endif
+
+    perform_test(7, 5, parhier_testing);
 
     /*std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(7, 5);
     TestingProposal testing_dimension_as_branching{7, 3, 2, 5};

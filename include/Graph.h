@@ -65,6 +65,9 @@ template <typename Digraph, typename ArcMap> bool dag(const Digraph& digraph, Ar
 
 size_t generateAllPathIds(size_t id, std::unordered_map<size_t, std::unordered_set<size_t>>& adj, const std::vector<size_t>& currentVector, std::map<size_t, std::string> &result, size_t height = 1);
 
+#include <fstream>
+#include <iostream>
+
 class Graph {
     size_t rootId;
     lemon::SmartDigraph g;
@@ -84,9 +87,11 @@ class Graph {
     // determining the vectorial size
     size_t isTree = std::numeric_limits<size_t>::min();
 
+    fixed_bimap<std::string, size_t> fileElementNameToId;
 
 public:
     Graph();
+    Graph(std::ifstream& file);
 
     size_t addNewNode(size_t id);
 

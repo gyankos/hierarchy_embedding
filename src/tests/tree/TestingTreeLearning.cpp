@@ -30,6 +30,14 @@ void TestingTreeLearning::initialize_hierarchy_with_all_paths(const std::vector<
 void TestingTreeLearning::finalizeDataIngestion() {
     // Init category hierarchy
     std::cout << "Initializing the EEEL Engine with some tweaks" << std::endl;
+    if (ee_engine_) {
+        delete ee_engine_;
+        ee_engine_ = nullptr;
+    }
+    if (trainer) {
+        delete trainer;
+        trainer = nullptr;
+    }
     ee_engine_ = new EEEngine(FULL, dimEmbedding, tree, bimap, num_entities_and_classes);
     //EEEngine engine{FULL, dimEmbedding, tree, bimap, num_entities_and_classes};
 

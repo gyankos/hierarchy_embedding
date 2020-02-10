@@ -156,3 +156,31 @@ const std::set<size_t> &Graph::getCandidates() {
 Graph::Graph() : costMap{g}, dfs{g}, dij{g, costMap}, rm{g} {
     dfs.reachedMap(rm);
 }
+
+Graph::Graph(std::ifstream &file) : Graph{} {
+    std::string child, parent;
+    double score;
+
+    std::unordered_map<size_t, size_t> branchingEvaluator;
+    size_t count = 0;
+
+    while (file >> child >> parent >> score) {
+        size_t childId, parentId; //ensuring that the root will be the one with id 0
+        if ((parentId = fileElementNameToId.putWithKeyCheck(parent, count)) == count) {
+            addNewNode(count++);
+        }
+        if ((childId = fileElementNameToId.putWithKeyCheck(child, count)) == count) {
+            addNewNode(count++);
+        }
+        auto it = branchingEvaluator.find(parentId);
+        if (it == branchingEvaluator.end()) {
+            maxBranch = std::max(maxBranch, (size_t)1);
+            branchingEvaluator.insert(std::make_pair(parentId, 1));
+        } else {
+            maxBranch = std::max(++it->second, maxBranch);
+        }
+        addNewEdge(parentId, childId, score);
+        /*if (childId == 22708 || parentId == 22708)
+            std::cout << child << "(" << childId <<  ")  --[" << score << "]--> " << parent << "(" << parentId << ")" <<  std::endl;*/
+    }
+}

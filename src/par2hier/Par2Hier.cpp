@@ -25,9 +25,16 @@ Par2Hier::Par2Hier(std::map<std::string, std::vector<double>> &originalVectorMap
 
 const std::vector<double> &Par2Hier::getPar2HierVector(const std::vector<size_t> &path) {
     std::string currentPath = size_vector_to_string(path);
+
+
+    g_pages_mutex.lock();
     auto it = memoizationMap.find(currentPath);
-    if (it != memoizationMap.end())
-        return it->second;
+    if (it != memoizationMap.end()) {
+        std::vector<double>& returno = it->second;
+        g_pages_mutex.unlock();
+        return returno;
+    }
+    g_pages_mutex.unlock();
 
     naryTree* currentNode = &tree;
     size_t parentChildNo = currentNode->getChildNo();
@@ -42,8 +49,16 @@ const std::vector<double> &Par2Hier::getPar2HierVector(const std::vector<size_t>
     }
 
     // If the selected node is a leaf, then return the same vector from the embedding of choice
-    if (parentChildNo == 0)
-        return memoizationMap.insert(std::make_pair(currentPath, originalVectorMap[size_vector_to_string(path)])).first->second;
+    if (parentChildNo == 0) {
+        std::lock_guard<std::mutex> lg(g_pages_mutex);
+        auto it2 = memoizationMap.find(currentPath);
+        if (it2 == memoizationMap.end()) {
+            assert(originalVectorMap.find(size_vector_to_string(path)) != originalVectorMap.end());
+            return memoizationMap.insert(std::make_pair(currentPath, originalVectorMap[size_vector_to_string(path)])).first->second;
+        } else {
+            return it2->second;
+        }
+    }
     else {
         std::vector<double> current = originalVectorMap[currentPath];
         Eigen::MatrixXd matrix(parentChildNo, k);
@@ -90,7 +105,15 @@ const std::vector<double> &Par2Hier::getPar2HierVector(const std::vector<size_t>
                 break;
         }
 
-        return memoizationMap.insert(std::make_pair(currentPath, current)).first->second;
+        {
+            std::lock_guard<std::mutex> lg(g_pages_mutex);
+            auto it23 = memoizationMap.find(currentPath);
+            if ((it23) == memoizationMap.end()) {
+                return memoizationMap.insert(std::make_pair(currentPath, current)).first->second;
+            } else {
+                return it23->second;
+            }
+        }
     }
 }
 

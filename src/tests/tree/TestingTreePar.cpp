@@ -18,8 +18,9 @@ std::vector<size_t> TestingTreePar::getVectorRepresentation(const std::vector<si
 }
 
 double TestingTreePar::similarity(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
-    auto x = p2h.getPar2HierVector(lhs);
-    auto y = p2h.getPar2HierVector(rhs);
+    std::vector<size_t> L{lhs}, R{rhs};
+    auto x = p2h.getPar2HierVector(L);
+    auto y = p2h.getPar2HierVector(R);
     double distance =  euclideanDistance(x, y);//safekeep.isConsistent(lhs, rhs) ? euclideanDistance(x, y) : std::numeric_limits<double>::max();
     // From now on, same as mine
     double normalizedDistance = distance / (1+distance);
