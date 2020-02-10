@@ -50,4 +50,7 @@ public:
 inline double fastsigmoid(const double x);
 
 double cosine_similarity(const std::vector<double>& lhs, const std::vector<double>& rhs);
+
+
+double max_cosine_similarity(const std::vector<std::vector<double>>& lhs, const std::vector<std::vector<double>>& rhs);
 #endif //HIERARCHY_TESTS_MATH_UTILS_H

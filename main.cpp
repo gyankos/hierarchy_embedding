@@ -128,7 +128,7 @@ int main() {
     g.generateNaryTree(treeToGraphMorphism, tree, treeIdToPathString);
 #endif
 
-#ifdef CONTINUE
+#if 1
     std::ifstream file{"noun.txt"};
     Graph g{file};
     file.close();
@@ -138,7 +138,7 @@ int main() {
     proposal.run(false);
 #endif
 
-    perform_test(7, 5, parhier_testing);
+    ///perform_test(7, 5, parhier_testing);
 
     /*std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(7, 5);
     TestingProposal testing_dimension_as_branching{7, 3, 2, 5};

@@ -53,9 +53,20 @@ double cosine_similarity(const std::vector<double> &lhs, const std::vector<doubl
 
 }
 
+
 std::vector<double> operator+=(std::vector<double> &lhs, const std::vector<double> &rhs) {
     lhs = lhs+rhs;
     return lhs;
+}
+
+double max_cosine_similarity(const std::vector<std::vector<double>> &lhs, const std::vector<std::vector<double>> &rhs) {
+    double sim = std::numeric_limits<double>::min();
+    for (auto x : lhs) {
+        for (auto y: lhs) {
+            sim = std::max(sim, cosine_similarity(x,y));
+        }
+    }
+    return sim;
 }
 
 Tanh &Tanh::getInstance() {

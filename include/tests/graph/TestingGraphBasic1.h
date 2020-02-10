@@ -11,8 +11,7 @@
 
 class TestingGraphBasic1  : public TestingGraph<std::vector<std::vector<double>>> {
     naryTree t{0};
-    std::unordered_map<size_t, size_t> treeIdToLocalTId;
-    std::map<std::string, std::vector<double>> keyValueMap;
+    std::unordered_map<size_t, std::vector<std::vector<double>>> memoizationMap;
     size_t nodes = 0;
 
 

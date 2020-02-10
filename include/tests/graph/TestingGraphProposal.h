@@ -12,6 +12,7 @@
 class TestingGraphProposal : public TestingGraph<std::vector<std::vector<size_t>>> {
 
     Proposal* prop = nullptr;
+    std::unordered_map<size_t, std::vector<std::vector<size_t>>> memoization_map;
     double distance;
     double decay;
 
@@ -23,12 +24,7 @@ public:
 
 protected:
     std::vector<std::vector<size_t>> getVectorRepresentation(const size_t &current) override {
-        std::vector<std::vector<size_t>> result;
-        for (const size_t& x : this->morphismInv[current]) {
-            result.emplace_back(
-                    string_split_to_sizetvector(this->treeIdToPathString[x]));
-        }
-        return result;
+        return memoization_map.at(current); // concurrent access to the map
     }
 
     double similarity(const std::vector<std::vector<size_t>> &lhs, const std::vector<std::vector<size_t>> &rhs) override {
@@ -59,6 +55,17 @@ protected:
             prop = nullptr;
         }
         prop = new Proposal(graph.maxBranch, distance, decay);
+        // memoizing the vector representations
+        std::cout << "Taking some time to memoize the computations..." << std::endl;
+        for (auto it : this->morphismInv) {
+            std::vector<std::vector<size_t>> result;
+            for (const size_t& x : it.second) {
+                result.emplace_back(
+                        string_split_to_sizetvector(this->treeIdToPathString[x]));
+            }
+            memoization_map.insert(std::make_pair(it.first, result));
+        }
+        std::cout << "...done! " << std::endl;
     }
 
 };
