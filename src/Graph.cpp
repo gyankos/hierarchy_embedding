@@ -2,8 +2,14 @@
 // Created by giacomo on 31/12/19.
 //
 
+#include <sys/stat.h>
 #include "Graph.h"
 #include "cout_utils.h"
+
+inline bool exists(const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
 
 size_t generateAllPathIds(size_t id, std::unordered_map<size_t, std::unordered_set<size_t>> &adj,
                           const std::vector<size_t> &currentVector, std::map<size_t, std::string> &result, size_t height) {
@@ -19,7 +25,7 @@ size_t generateAllPathIds(size_t id, std::unordered_map<size_t, std::unordered_s
 }
 
 size_t Graph::addNewNode(size_t id) {
-    std::unordered_map<size_t, size_t>::iterator it = nodeMap.find(id);
+    auto it = nodeMap.find(id);
     if (it != nodeMap.end())
         return it->second;
     lemon::SmartDigraph::Node currentNode = g.addNode();
@@ -29,7 +35,8 @@ size_t Graph::addNewNode(size_t id) {
 }
 
 void Graph::addNewEdge(size_t src, size_t dst, int weight) {
-    lemon::SmartDigraph::Node srcNode = g.nodeFromId(addNewNode(src)), dstNode = g.nodeFromId(addNewNode(dst));
+    size_t src2 = addNewNode(src), dst2 = addNewNode(dst);
+    lemon::SmartDigraph::Node srcNode = g.nodeFromId(src2), dstNode = g.nodeFromId(dst2);
     costMap[g.addArc(srcNode, dstNode)] = weight;
 }
 
@@ -70,7 +77,9 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
     std::vector<lemon::SmartDigraph::Node> nodes;
     lemon::LoggerBoolMap<std::back_insert_iterator<std::vector<lemon::SmartDigraph::Node>>> map(std::back_inserter(nodes));
     lemon::topologicalSort(g, map);
-
+    size_t minVectors = std::numeric_limits<size_t>::max();
+    size_t vecAverage = 0;
+    std::map<size_t,size_t> mostFrequent;
 
     for (auto it = nodes.rbegin(); it != nodes.rend(); it++) {
         size_t nId = g.id(*it);
@@ -90,6 +99,7 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
             treeToGraphMorphism[currentVertex] = nId;
             morphismInv[nId].insert(currentVertex);
             isTree = std::max(isTree, morphismInv[nId].size());
+            minVectors = std::min(minVectors, morphismInv[nId].size());
             const auto& it = morphismInv.find(g.id(g.source(parent)));
             assert(it != morphismInv.end());
             for (const size_t& parentMaps : it->second) {
@@ -97,6 +107,10 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
                 maxBranch = std::max(maxBranch, tree[parentMaps].size());
             }
         }
+        vecAverage += morphismInv[nId].size();
+        auto it2 = mostFrequent.insert(std::make_pair(morphismInv[nId].size(), 1));
+        if (!it2.second)
+            it2.first->second++;
 
         // Determining which are the leaves: those will be used for the testing
         bool isLeaf = true;
@@ -110,55 +124,93 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
 
     height = generateAllPathIds(rootId, tree, {}, treeIdToPathString, 1);
 
+    std::set<size_t> mostFrequentValues;
+    int mostFrequentVal = -1;
+    for (auto& it3 : mostFrequent) {
+        if (((int)it3.second) > mostFrequentVal) {
+            mostFrequentValues.clear();
+            mostFrequentVal = it3.second;
+            mostFrequentValues.emplace(it3.first);
+        } else if (((int)it3.second) == mostFrequentVal) {
+            mostFrequentValues.emplace(it3.first);
+        }
+    }
+
     std::cout << " branching factor " << maxBranch << " could be 'decreased' by the JL lemma to at least " << dimension_extimate((size_t)g.nodeNum(), 3.0/std::pow(2.0, height)) <<  std::endl;
     std::cout << " tree height = " << height << std::endl;
     std::cout << " maximum number of vectors per node: " << isTree << std::endl;
+    std::cout << " minimum number of vectors per node: " << minVectors << std::endl;
+    std::cout << " average number of vectors per node: " << ((vecAverage * 1.0) / (g.nodeNum() * 1.0)) << std::endl;
+    std::cout << " most frequent vector values: " << mostFrequentValues << " with frequency " << mostFrequentVal << " which, normalized, is " << (((double)mostFrequentVal)/((double)g.nodeNum())) <<  std::endl;
     std::cout << " #nodes " << g.nodeNum() << std::endl;
     std::cout << " #candidate test leaves " << internalLeafCandidates.size() << ", which are " << internalLeafCandidates << std::endl;
+
+    std::cout << "Johnson (trivial) algorithm for all the possible pairs" << std::endl;
+    johnsonAlgorithm();
+    std::cout << "... done! " << std::endl;
+
 }
 
 size_t Graph::isTherePath(size_t dst,
                           std::map<size_t, size_t> &dstCandidates) {
     // Converting the outer ids to the internal ones
-    dst = nodeMap[dst];
-
+    size_t dstGraph = nodeMap.at(dst);
     // If I haven't run the search from this node, then initialize the search
-    if (rootId != sourceDfsNode) {
-        sourceDfsNode = rootId;
+    /*if (rootId != sourceDfsNode)*/ {
+        /*size_t sourceDfsNode = rootId;
+        lemon::Dfs<lemon::SmartDigraph> dfs{g};
+        dfs.reachedMap(rm);
+        lemon::Dijkstra<lemon::SmartDigraph> dij{g, costMap};
+        std::set<size_t> internalLeafCandidates;
         dfs.init();
         dfs.addSource(g.nodeFromId(sourceDfsNode));
         dfs.start();
         dij.init();
         dij.addSource(g.nodeFromId(sourceDfsNode));
         dij.start();
-        maxLength = std::numeric_limits<size_t>::min();
+        maxLength = std::numeric_limits<size_t>::min();*/
         std::vector<size_t> noReachedElements;
+        int maxLength = -1;
        // bool doInsertInUM = dstCandidates.find(dst) == dstCandidates.end();// perform the insertion only if it hasn't been previously inserted for src.
-        for (const auto& node : g.nodes()) {
-            if (dij.reached(node)) { // reachability
-                //if (doInsertInUM)
-                dstCandidates[invMap[g.id(node)]] =  dfs.dist(node);
-                maxLength = std::max(maxLength, (size_t)dfs.dist(node)+1);
+        for (const auto& graph_id_to_original : invMap) {
+            size_t graph_id = graph_id_to_original.first;
+            size_t original_id = graph_id_to_original.second;
+            if  (dstGraph == graph_id) {
+                dstCandidates[original_id] = 0;
+                maxLength = std::max(maxLength, 1);
             } else {
-                noReachedElements.emplace_back(g.id(node));
+                auto cp = std::make_pair(dstGraph, graph_id);
+                auto it = transitive_closure_map.find(cp);
+                if (it != transitive_closure_map.end()) { // reachability: ignoring the self node.
+                    //if (doInsertInUM)
+                    dstCandidates[original_id] =  it->second;
+                    maxLength = std::max(maxLength, (int)it->second+1);
+                } else {
+                    /*if (dstGraph != graph_id)*/ noReachedElements.emplace_back(original_id);
+                }
             }
-            for (const auto& notInPath : noReachedElements)
-                dstCandidates[notInPath] = maxLength;
+
         }
+        if (maxLength == -1)
+            maxLength = 1;
+        for (const auto& notInPath : noReachedElements)
+            dstCandidates[notInPath] = maxLength;
+        return fw_cost(rootId, dst);
     }
-    return dij.reached(g.nodeFromId(dst)) ? dij.dist(g.nodeFromId(dst)) : maxLength;
 }
 
 const std::set<size_t> &Graph::getCandidates() {
     return internalLeafCandidates;
 }
 
-Graph::Graph() : costMap{g}, dfs{g}, dij{g, costMap}, rm{g} {
-    dfs.reachedMap(rm);
+Graph::Graph() : costMap{g}, /*dfs{g}, dij{g, costMap},*/ rm{g} {
+   // dfs.reachedMap(rm);
 }
 
-Graph::Graph(std::ifstream &file) : Graph{} {
+Graph::Graph(const std::string &filename) : Graph{} {
+    this->filename = filename;
     std::string child, parent;
+    std::ifstream file{filename};
     double score;
 
     std::unordered_map<size_t, size_t> branchingEvaluator;
@@ -183,4 +235,47 @@ Graph::Graph(std::ifstream &file) : Graph{} {
         /*if (childId == 22708 || parentId == 22708)
             std::cout << child << "(" << childId <<  ")  --[" << score << "]--> " << parent << "(" << parentId << ")" <<  std::endl;*/
     }
+}
+
+void Graph::johnsonAlgorithm() {
+    size_t count = 0;
+    std::string johnson = filename+"_out.csv";
+
+    if (exists(johnson)) {
+        std::cout << "Loading the precomputed outcome of the johnson Algorithm" << std::endl;
+        std::ifstream file{johnson};
+        size_t src,dst,w;
+        while (file >> src >> dst >> w) {
+            transitive_closure_map[std::make_pair(src, dst)] = w;
+        }
+    } else {
+        std::cout << "Running Dijkstra for each node in the graph" << std::endl;//In fact, we don't need to run Bellman-Ford's algorithm, as we have no negative edges in here.
+        // Still, this algorithm will be more efficient than running Floyd-Washall's algorithm, for the DAG is sparse
+        std::ofstream file{johnson};
+        for (auto& u : g.nodes()) { // For each vertex u in the graph
+                if (!(count % 1000)) {
+                    std::cout << count+1 << std::endl;
+                }
+                count++;
+                lemon::Dfs<lemon::SmartDigraph> dfs{g};
+                lemon::Dijkstra<lemon::SmartDigraph> dij{g, costMap};
+                dfs.init();
+                dfs.addSource(u);
+                dfs.start();
+                dij.init();
+                dij.addSource(u);
+                dij.start();
+
+                auto& d = dij.distMap(); // Get the distance map for the current run of Dijkstra
+
+                for (auto& v : g.nodes()) { // Setting up the distance map
+                    if (dij.reached(v) && (v != u)) {
+                        transitive_closure_map[std::make_pair(g.id(u), g.id(v))] = d[v];
+                        file << g.id(u) << " " << g.id(v) << " " << d[v] << std::endl;
+                    }
+                }
+        }
+
+    }
+    std::cout << "...done!" << std::endl;
 }

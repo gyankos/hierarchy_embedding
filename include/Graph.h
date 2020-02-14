@@ -68,20 +68,44 @@ size_t generateAllPathIds(size_t id, std::unordered_map<size_t, std::unordered_s
 #include <fstream>
 #include <iostream>
 
+namespace std {
+    template <> struct hash<std::pair<size_t,size_t>> {
+            size_t operator()(const pair<size_t, size_t>& p) const
+            {
+                auto hash1 = hash<size_t>{}(p.first);
+                auto hash2 = hash<size_t>{}(p.second);
+                return hash1 ^ hash2;
+            }
+    };
+}
+
 class Graph {
     size_t rootId;
     lemon::SmartDigraph g;
+    std::string filename;
     std::unordered_map<size_t, size_t> nodeMap;
     std::unordered_map<size_t, size_t> invMap;
+    std::unordered_map<std::pair<size_t,size_t>, size_t> transitive_closure_map;
     lemon::SmartDigraph::ArcMap<int> costMap;
     lemon::SmartDigraph::NodeMap<bool> rm;
     size_t maxCurrentNode;
     size_t sourceDfsNode = std::numeric_limits<size_t>::min();
     size_t maxLength;
-    lemon::Dfs<lemon::SmartDigraph> dfs;
-    lemon::Dijkstra<lemon::SmartDigraph> dij;
+    //lemon::Dfs<lemon::SmartDigraph> dfs;
+    //lemon::Dijkstra<lemon::SmartDigraph> dij;
     std::set<size_t> internalLeafCandidates;
 
+    inline size_t fw_cost(size_t src, size_t dst) {
+        return (src == dst) ? 0 : fw_cost(std::make_pair(src,dst));
+    }
+
+    inline size_t fw_cost(const std::pair<size_t,size_t>& cp) {
+        if (cp.first == cp.second) return 0;
+        auto it = transitive_closure_map.find(cp);
+        return it != transitive_closure_map.end() ? it->second : std::numeric_limits<size_t>::max();
+    }
+
+    void johnsonAlgorithm();
 
     // Getting which is the maximal branching factor of the graph: this is required for the basic metric and for
     // determining the vectorial size
@@ -89,13 +113,13 @@ class Graph {
 
     fixed_bimap<std::string, size_t> fileElementNameToId;
 
-public:
-    Graph();
-    Graph(std::ifstream& file);
-
     size_t addNewNode(size_t id);
+    void addNewEdge(size_t src, size_t dst, int weight);
+    Graph();
 
-    void addNewEdge(size_t src, size_t dst, int weight = 1);
+public:
+    Graph(const std::string &filename);
+
 
     /**
      *
@@ -109,16 +133,12 @@ public:
      */
     size_t generateNaryTree(std::unordered_map<size_t, size_t>& treeToGraphMorphism, std::unordered_map<size_t, std::unordered_set<size_t>>& tree, std::map<size_t, std::string>& treeIdToPathString,
                             std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv);
-
     const std::set<size_t>& getCandidates();
-
     size_t isTherePath(size_t dst, std::map<size_t, size_t> &dstCandidates);
-    //lemon::SubGraphAdaptor<lemon::SmartDigraph, lemon::SmartDigraph::NodeMap<bool>, lemon::SmartDigraph::ArcMap<bool> > subGraph;
-// Getting which is the maximal branching factor of the graph: this is required for the basic metric and for
-    // determining the vectorial size
+
+   // Getting which is the maximal branching factor of the graph: this is required for the basic metric
+   // determining the vectorial size
     size_t maxBranch = std::numeric_limits<size_t>::min();
-
-
     size_t height;
 };
 
