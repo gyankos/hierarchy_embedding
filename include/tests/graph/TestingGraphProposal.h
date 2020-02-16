@@ -23,16 +23,16 @@ public:
     }
 
 protected:
-    std::vector<std::vector<size_t>> getVectorRepresentation(const size_t &current) override {
+    std::vector<std::vector<size_t>> getVectorRepresentation(const size_t &current) const override {
         return memoization_map.at(current); // concurrent access to the map
     }
 
-    double similarity(const std::vector<std::vector<size_t>> &lhs, const std::vector<std::vector<size_t>> &rhs) override {
+    double similarity(const std::vector<std::vector<size_t>> &lhs, const std::vector<std::vector<size_t>> &rhs) const override {
         double similarity = std::numeric_limits<double>::min();
         for (const auto x : lhs) {
             for (const auto y : rhs) {
                 double distanceMetric =  prop->rankingMetric(x, y);
-                double normalizedDistance = distanceMetric / (1+distanceMetric);
+                double normalizedDistance = (distanceMetric == std::numeric_limits<size_t>::max()) ? 1 : distanceMetric / (1+distanceMetric);
                 double local_similairity = 1 - normalizedDistance;
                 similarity = std::max(local_similairity, similarity);
             }

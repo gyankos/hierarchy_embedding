@@ -118,6 +118,9 @@ class Graph {
     Graph();
 
 public:
+    std::string getName(size_t id) {
+        return fileElementNameToId.getKey(id);
+    }
     Graph(const std::string &filename);
 
 
@@ -134,7 +137,57 @@ public:
     size_t generateNaryTree(std::unordered_map<size_t, size_t>& treeToGraphMorphism, std::unordered_map<size_t, std::unordered_set<size_t>>& tree, std::map<size_t, std::string>& treeIdToPathString,
                             std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv);
     const std::set<size_t>& getCandidates();
-    size_t isTherePath(size_t dst, std::map<size_t, size_t> &dstCandidates);
+
+    template <typename F> size_t isTherePath(size_t dst, std::map<size_t, size_t> &dstCandidates,  F &callback) {
+        // Converting the outer ids to the internal ones
+        size_t dstGraph = nodeMap.at(dst);
+        // If I haven't run the search from this node, then initialize the search
+        /*if (rootId != sourceDfsNode)*/ {
+            /*size_t sourceDfsNode = rootId;
+            lemon::Dfs<lemon::SmartDigraph> dfs{g};
+            dfs.reachedMap(rm);
+            lemon::Dijkstra<lemon::SmartDigraph> dij{g, costMap};
+            std::set<size_t> internalLeafCandidates;
+            dfs.init();
+            dfs.addSource(g.nodeFromId(sourceDfsNode));
+            dfs.start();
+            dij.init();
+            dij.addSource(g.nodeFromId(sourceDfsNode));
+            dij.start();
+            maxLength = std::numeric_limits<size_t>::min();*/
+            std::vector<size_t> noReachedElements;
+            int maxLength = -1;
+            // bool doInsertInUM = dstCandidates.find(dst) == dstCandidates.end();// perform the insertion only if it hasn't been previously inserted for src.
+            for (const auto& graph_id_to_original : invMap) {
+                size_t graph_id = graph_id_to_original.first;
+                size_t original_id = graph_id_to_original.second;
+                if  (dstGraph == graph_id) {
+                    callback(original_id, 1);          // --
+                    dstCandidates[original_id] = 1;          // --
+                    maxLength = std::max(maxLength, 1);
+                } else {
+                    auto cp = std::make_pair(graph_id, dstGraph);
+                    auto it = transitive_closure_map.find(cp);
+                    if (it != transitive_closure_map.end()) { // reachability: ignoring the self node.
+                        //if (doInsertInUM)
+                        dstCandidates[original_id] =  it->second+1;  //--
+                        callback(original_id, it->second+1);         //--
+                        ///maxLength = std::max(maxLength, (int)it->second+2);
+                    } else {
+                        /*if (dstGraph != graph_id)*/ noReachedElements.emplace_back(original_id);
+                    }
+                }
+
+            }
+            /**if (maxLength == -1)
+                maxLength = 1;
+            for (const auto& notInPath : noReachedElements) {
+                dstCandidates[notInPath] = maxLength;  //--
+                callback(notInPath, maxLength);        //--
+            }*/
+            return fw_cost(rootId, dst);
+        }
+    }
 
    // Getting which is the maximal branching factor of the graph: this is required for the basic metric
    // determining the vectorial size

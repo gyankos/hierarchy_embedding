@@ -151,53 +151,7 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
 
 }
 
-size_t Graph::isTherePath(size_t dst,
-                          std::map<size_t, size_t> &dstCandidates) {
-    // Converting the outer ids to the internal ones
-    size_t dstGraph = nodeMap.at(dst);
-    // If I haven't run the search from this node, then initialize the search
-    /*if (rootId != sourceDfsNode)*/ {
-        /*size_t sourceDfsNode = rootId;
-        lemon::Dfs<lemon::SmartDigraph> dfs{g};
-        dfs.reachedMap(rm);
-        lemon::Dijkstra<lemon::SmartDigraph> dij{g, costMap};
-        std::set<size_t> internalLeafCandidates;
-        dfs.init();
-        dfs.addSource(g.nodeFromId(sourceDfsNode));
-        dfs.start();
-        dij.init();
-        dij.addSource(g.nodeFromId(sourceDfsNode));
-        dij.start();
-        maxLength = std::numeric_limits<size_t>::min();*/
-        std::vector<size_t> noReachedElements;
-        int maxLength = -1;
-       // bool doInsertInUM = dstCandidates.find(dst) == dstCandidates.end();// perform the insertion only if it hasn't been previously inserted for src.
-        for (const auto& graph_id_to_original : invMap) {
-            size_t graph_id = graph_id_to_original.first;
-            size_t original_id = graph_id_to_original.second;
-            if  (dstGraph == graph_id) {
-                dstCandidates[original_id] = 0;
-                maxLength = std::max(maxLength, 1);
-            } else {
-                auto cp = std::make_pair(dstGraph, graph_id);
-                auto it = transitive_closure_map.find(cp);
-                if (it != transitive_closure_map.end()) { // reachability: ignoring the self node.
-                    //if (doInsertInUM)
-                    dstCandidates[original_id] =  it->second;
-                    maxLength = std::max(maxLength, (int)it->second+1);
-                } else {
-                    /*if (dstGraph != graph_id)*/ noReachedElements.emplace_back(original_id);
-                }
-            }
 
-        }
-        if (maxLength == -1)
-            maxLength = 1;
-        for (const auto& notInPath : noReachedElements)
-            dstCandidates[notInPath] = maxLength;
-        return fw_cost(rootId, dst);
-    }
-}
 
 const std::set<size_t> &Graph::getCandidates() {
     return internalLeafCandidates;

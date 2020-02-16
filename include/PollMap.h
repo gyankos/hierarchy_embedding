@@ -81,6 +81,17 @@ public:
         this->topK = (topK <= 0) ? std::numeric_limits<int>::max() : topK;
     }
 
+    void resize(size_t topK) {
+        this->topK = (topK <= 0) ? std::numeric_limits<int>::max() : topK;
+        const size_t originalSize = poll.size();
+        auto eraseIter = poll.begin();
+        auto realNumToRemove = std::max(((int)originalSize)-((int)topK), 0);
+        if (!realNumToRemove) return;
+        std::advance(eraseIter, realNumToRemove);
+        poll.erase(poll.begin(), eraseIter);
+        ///doSanitize();
+    }
+
     PollMap(const PollMap& x) : poll{x.poll}, valueScore{x.valueScore}, sanitize{x.sanitize}, topK{x.topK} {}
     PollMap& operator=(const PollMap& x) {
         poll = x.poll;
@@ -142,6 +153,7 @@ public:
 
 
     const std::map<K, std::set<V>>& getPoll() const {
+        //doSanitize();
         return poll;
     }
 

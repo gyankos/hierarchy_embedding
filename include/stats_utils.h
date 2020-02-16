@@ -7,7 +7,7 @@
 
 #include <map>
 
-template <typename K> double Spearmam_rank_correlation_coefficient(const std::map<K,size_t>& a, const std::map<K,size_t>& b ) {
+template <typename K> double Spearmam_rank_correlation_coefficient(const std::map<K,size_t>& a,                                const std::map<K,size_t>& b ) {
     double dSum = 0.0;
     for(auto it_m1 = a.cbegin(), end_m1 = a.cend(),
                 it_m2 = b.cbegin(), end_m2 = b.cend();
@@ -20,23 +20,22 @@ template <typename K> double Spearmam_rank_correlation_coefficient(const std::ma
 }
 
 template <typename K> double normalized_discounted_cumulative_gain(const std::map<double, std::set<K>> &poll, std::map<K,size_t>& b ) {
-    double pos = 1.0;
-    double dcg_p = 0.0;
-    double idcg_p = 0.0;
+    double NDCG_pos = 1.0;
+    double NDCG_dcg_p = 0.0;
+    double NDCG_idcg_p = 0.0;
     for (auto it = poll.rbegin(); it != poll.rend(); it++) {
         if (it->second.empty()) continue;
-        double div = log2(++pos);
+        double div = log2(++NDCG_pos);
         // average rel
         double toSum = 0.0;
         for (auto k : it->second)
             toSum += (double)b[k];
         double reli = toSum / (double)it->second.size();     // Average ranking
         toSum = (1.0 + reli) / div;                           // Actual formula
-        dcg_p += toSum;
-        idcg_p += 1.0 + (std::pow(2, reli) - 1.0) / div;
-        //std::cerr << toSum << "/" << (std::pow(2, 1.0+reli) - 1.0) / div << std::endl;
+        NDCG_dcg_p += toSum;
+        NDCG_idcg_p += 1.0 + (std::pow(2, reli) - 1.0) / div;
     }
-    return dcg_p / idcg_p;
+    return NDCG_dcg_p / NDCG_idcg_p;
 }
 
 #endif //HIERARCHY_TESTS_STATS_UTILS_H
