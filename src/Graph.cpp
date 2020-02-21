@@ -44,7 +44,7 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
                                std::unordered_map<size_t, std::unordered_set<size_t>> &tree,
                                std::map<size_t, std::string> &treeIdToPathString,
 
-                               std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv) {
+                               std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv, char* rootNameNode) {
     //std::unordered_map<size_t, std::unordered_set<size_t>> morphismInv;
 
     // Ensuring that the loaded dataset is indeed a DAG
@@ -69,7 +69,13 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
     // this node shall correspond to "entity"
     //std::cout << invMap[noParentNodes[0]] << std::endl;
 
-    rootId = noParentNodes[0];
+    if (!rootNameNode)
+        rootId = noParentNodes[0];
+    else {
+        std::string rootName = rootNameNode;
+        rootId = getId(rootNameNode);
+        std::cout << "Setting " << rootName << " with id " << rootId << "as the root" << std::endl;
+    }
     treeToGraphMorphism[rootId] = invMap[rootId];
     morphismInv[invMap[rootId]].insert(rootId);
 
@@ -92,7 +98,7 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
             isMax++;
             if (isMax > 1) break;
         }
-        //std::cout << nId << " with  isMax = " << isMax <<  std::endl;
+
 
         for (const auto& parent : g.inArcs(*it)) {
             size_t currentVertex = (isMax <= 1) ? nId : ++maxCurrentNode;
@@ -233,3 +239,23 @@ void Graph::johnsonAlgorithm() {
     }
     std::cout << "...done!" << std::endl;
 }
+
+size_t Graph::getRootId() {
+    return rootId;
+}
+
+int Graph::nodeSize() {
+    return nodeMap.size();
+}
+
+std::vector<size_t> Graph::getChildren(size_t i) {
+    std::vector<size_t> toRet;
+    auto it = g.outArcs(g.nodeFromId(i));
+    auto itx = it.begin(), itf = it.end();
+    while (itx != itf) {
+        toRet.emplace_back(g.id(itx));
+        itx++;
+    }
+    return toRet;
+}
+

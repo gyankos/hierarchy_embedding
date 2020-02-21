@@ -34,7 +34,7 @@ public:
     }
 
 protected:
-    void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &element);
+    void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subpaths);
     size_t getVectorRepresentation(const std::vector<size_t> &current);
     double similarity(const size_t &lhs, const size_t &rhs);
     void generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current);
@@ -42,7 +42,7 @@ protected:
 };
 
 
-void testing_learning_method();
+void testing_batch_learning_method();
 
 
 void batch_learning(const std::vector<Datum> &batch, HierarchyLearning &trainer, int iterations);

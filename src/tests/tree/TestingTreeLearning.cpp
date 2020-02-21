@@ -11,17 +11,17 @@ TestingTreeLearning::TestingTreeLearning(size_t maximumBranchingFactor, size_t m
     trainer = nullptr;
 }
 
-void TestingTreeLearning::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &element) {
-    for (auto& x : element/*.get()*/) {
-        std::string x_val = size_vector_to_string(x);
+void TestingTreeLearning::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subpaths) {
+    for (auto& path : subpaths/*.get()*/) {
+        std::string x_val = size_vector_to_string(path);
         allNodes.emplace(x_val);
-        for (auto& y : generateAllPossibleSubpaths(x)) {
-            std::string y_val = size_vector_to_string(y);
+        for (auto& subpath : generateAllPossibleSubpaths(path)) {
+            std::string y_val = size_vector_to_string(subpath);
             positiveExamples[x_val].emplace(y_val);
             positiveExamples[y_val].emplace(x_val);
         }
         // Getting the id of the new element that is now added: id
-        num_entities_and_classes += tree.addChild(x, id);
+        num_entities_and_classes += tree.addChild(path, id);
         // Adding the id of the associated element, and associating that to the string. That is going ot be used to determine the best common ancestor.
         bimap.put(x_val, id);
     }
@@ -38,7 +38,7 @@ void TestingTreeLearning::finalizeDataIngestion() {
         delete trainer;
         trainer = nullptr;
     }
-    ee_engine_ = new EEEngine(FULL, dimEmbedding, tree, bimap, num_entities_and_classes);
+    ee_engine_ = new EEEngine(FULL, dimEmbedding, tree, bimap, num_entities_and_classes, nullptr);
     //EEEngine engine{FULL, dimEmbedding, tree, bimap, num_entities_and_classes};
 
     std::cout << "Generating the negative examples" << std::endl;
@@ -46,7 +46,7 @@ void TestingTreeLearning::finalizeDataIngestion() {
     for (const std::string& x : allNodes) {
         const std::set<std::string>& set = positiveExamples[x];
         std::set<std::string>& difference = negativeExamples[x];
-        std::set_difference(set.begin(), set.end(), allNodes.begin(), allNodes.end(), std::inserter(difference, difference.begin()));
+        std::set_difference(allNodes.begin(), allNodes.end(), set.begin(), set.end(), std::inserter(difference, difference.begin()));
     }
 
     std::vector<Datum> batch = ee_engine_->generateData(positiveExamples, negativeExamples);
@@ -79,76 +79,12 @@ void TestingTreeLearning::generateTopKCandidates(PollMap<double, std::string> &m
     }
 }
 
-void testing_learning_method() {
+void testing_batch_learning_method() {
 
-#if 0
-    size_t maximumBranchingFactor = 5;
-    double distanceFactor = 3;
-    int decayFactor = 2;
-    size_t maximumHeight = 3;
-
-    std::cout << "Generating the complete tree" << std::endl;
-    naryTree tree{0};
-    size_t id = 0, num_entities_and_classes = 1; //num_entities_and_classes is initialized with 1, because the root will be added automatically
-
-    std::cout << "Generating the positive examples" << std::endl;
-    std::map<std::string, std::set<std::string>> positiveExamples;
-    fixed_bimap<std::string, size_t>             bimap;             // Bijection between path as a string and the id
-    std::set<std::string> allNodes;                                 // Containing all the nodes within the hierarchy
-
-    // Adding the root node
-    bimap.put("", 0);
-    for (auto& element : generateCompleteSubgraph(maximumBranchingFactor, maximumHeight)) {
-        for (auto& x : element/*.get()*/) {
-            std::string x_val = size_vector_to_string(x);
-            allNodes.emplace(x_val);
-            for (auto& y : generateAllPossibleSubpaths(x)) {
-                std::string y_val = size_vector_to_string(y);
-                positiveExamples[x_val].emplace(y_val);
-                positiveExamples[y_val].emplace(x_val);
-            }
-            // Getting the id of the new element that is now added: id
-            num_entities_and_classes += tree.addChild(x, id);
-            // Adding the id of the associated element, and associating that to the string. That is going ot be used to determine the best common ancestor.
-            bimap.put(x_val, id);
-        }
-    }
-
-    // Init category hierarchy
-    std::cout << "Initializing the EEEL Engine with some tweaks" << std::endl;
-    EEEngine engine{FULL, maximumBranchingFactor, tree, bimap, num_entities_and_classes};
-
-    std::cout << "Generating the negative examples" << std::endl;
-    std::map<std::string, std::set<std::string>> negativeExamples;
-    for (const std::string& x : allNodes) {
-        const std::set<std::string>& set = positiveExamples[x];
-        std::set<std::string>& difference = negativeExamples[x];
-        std::set_difference(set.begin(), set.end(), allNodes.begin(), allNodes.end(), std::inserter(difference, difference.begin()));
-    }
-
-    std::vector<Datum> batch = engine.generateData(positiveExamples, negativeExamples);
-
-    // Finished to generate the
-    std::cout << "Initializing the EEEL Trainer" << std::endl;
-    HierarchyLearning trainer{FULL, maximumBranchingFactor, num_entities_and_classes, num_entities_and_classes};
-
-    //batch_learning(batch, trainer, 10);
-    for (int i = 0; i<10; i++)
-        trainer.Solve_single(batch);
-    std::cout << trainer.ComputeObjective_single(batch) << std::endl;
-#endif
     size_t maximumBranchingFactor = 4;
-    double distanceFactor = 3;
-    int decayFactor = 2;
-
     size_t maximumHeight = 3;
 
-    // TODO: lightweight
-    /*size_t maximumBranchingFactor = 2;
-     double distanceFactor = 3;
-     int decayFactor = 2;
 
-     size_t maximumHeight = 2;*/
     std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
     TestingTreeLearning testing_dimension_as_branching{maximumBranchingFactor, maximumHeight, 7};
     testing_dimension_as_branching.run(ls);
@@ -156,9 +92,6 @@ void testing_learning_method() {
     TestingTreeLearning testing_dimension_mid_branching_100{maximumBranchingFactor, maximumHeight,
                                                             50};
     testing_dimension_mid_branching_100.run(ls);
-
-    /*TestingLearning testing_dimension_100{maximumBranchingFactor, maximumHeight, 100};
-    testing_dimension_100.run(ls);*/
 }
 
 void batch_learning(const std::vector<Datum> &batch, HierarchyLearning &trainer, int iterations) {

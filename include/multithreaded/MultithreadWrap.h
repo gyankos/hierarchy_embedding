@@ -10,7 +10,7 @@
 /**
  * This macro sets up whether the implementation should be multithreaded or not,
  */
-#define IS_MULTITHREADED        (true)
+#define IS_MULTITHREADED        (false)
 
 template<class T>
 class MultithreadWrap {

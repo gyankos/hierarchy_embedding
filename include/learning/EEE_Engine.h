@@ -18,12 +18,13 @@
 #include <naryTree.h>
 #include <fixed_bimap.h>
 #include <learning/Datum.h>
+#include <Graph.h>
 #include "Hierarchy.h"
 
 class EEEngine {
 public:
     EEEngine(DistMetricMode metric, const size_t dim_embedding, naryTree &tree, fixed_bimap<std::string, size_t> &bimap,
-             size_t num_entity_category);
+             size_t num_entity_category, Graph* graphptr);
     ~EEEngine();
 
     EEEngine&operator=(const EEEngine&) = default;
@@ -36,14 +37,6 @@ public:
 
     inline int num_entity() { return num_entity_category; }
 
-    // TODO: Given a the current batch, all the negative samples are the pairs of the objects that are not within the hierarchy
-    //void SampleNegEntities(Datum &datum);
-
-    // TODO: the minibatch will be the set of all the elements that are within the hierarchy
-    /*void ThreadCreateMinibatch(const std::vector<int> &next_minibatch_data_idx,
-                               std::vector<Datum> &next_minibatch);*/
-
-
     void InitEntityCategories();
 
     Hierarchy entity_category_hierarchy_;
@@ -55,6 +48,7 @@ public:
      * @param levelId           Level id from which the visit is started: initially zero if the tree is the tree node.
      */
     void ReadHierarchyIdWithLevel(naryTree &tree, size_t levelId = 0);
+    void ReadHierarchyIdWithLevel(Graph *tree, size_t currentNodeId, size_t level);
     void ReadHierarchyIdWithLevel();
 
     /**

@@ -139,7 +139,7 @@ struct TestingGraphLambda {
 
         expectedMeanPollRank /= ((double)map_size);
 
-        size_t inferredPollCurrentPos = 1;
+        size_t inferredPollCurrentPos = castor_et_pollux.size();
         double inferredMeanPollRank = 0.0;
         size_t overallX = 0;
         std::vector<double> precalculateX;
@@ -169,15 +169,6 @@ struct TestingGraphLambda {
             inferredMeanPollRank += (inferredPollCurrentPos * N);
             inferredPollCurrentPos--;
 
-            // average rel
-            if (doNCDG) {
-                div = log2(++NDCG_pos);
-                reli = toSum / ((double)N);     // Average ranking
-                toSum = (1.0 + reli) / div;                           // Actual formula
-                NDCG_dcg_p += toSum;
-                NDCG_idcg_p += 1.0 + (std::pow(2, reli) - 1.0) / div;
-            }
-
         }
         inferredMeanPollRank /= ((double)overallX);
 
@@ -193,7 +184,6 @@ struct TestingGraphLambda {
         }
 
         maps.spearman += (overallX > 1) ? numeratore / std::sqrt(calculateXSquaredSummed * calculateYSquaredSummed) : 1.0-abs(inferredMeanPollRank-expectedMeanPollRank)/(1+abs(inferredMeanPollRank-expectedMeanPollRank));
-        //maps.ncdg += NDCG_dcg_p / NDCG_idcg_p;
     }
 
  };
@@ -333,14 +323,14 @@ public:
     TestingGraph(Graph& ref) : passGraph{ref} {}
 
 
-    void run(bool isMultithreaded) {
+    void run(bool isMultithreaded, char* rootName = nullptr) {
         treeToGraphMorphism.clear();
         morphismInv.clear();
         tree.clear();
         treeIdToPathString.clear();
 
         // Filling up all the three data structures provided up above.
-        passGraph.generateNaryTree(treeToGraphMorphism, tree, treeIdToPathString, morphismInv);
+        passGraph.generateNaryTree(treeToGraphMorphism, tree, treeIdToPathString, morphismInv, rootName);
         maximumBranchingFactor = passGraph.maxBranch;
         maximumHeight = passGraph.height;
         passGraphDataIfRequired(passGraph);
@@ -388,7 +378,8 @@ public:
                     ///maps.precision_narrow += this->Precision_narrow(candidateId, rankedCandidates);
                     //maps.ncdg += this->NDCG(candidateId, rankedCandidates);
                     ///maps.recall += minmax.first;
-                    ///maps.smallerNotCandidate += minmax.second;
+                    ///maps.smallerNotCandidate += minmax.second;+
+                    ///std::cout << maps.precision << std::endl;
                 }
 
                 return maps;

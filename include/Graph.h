@@ -89,7 +89,6 @@ class Graph {
     lemon::SmartDigraph::ArcMap<int> costMap;
     lemon::SmartDigraph::NodeMap<bool> rm;
     size_t maxCurrentNode;
-    size_t sourceDfsNode = std::numeric_limits<size_t>::min();
     size_t maxLength;
     //lemon::Dfs<lemon::SmartDigraph> dfs;
     //lemon::Dijkstra<lemon::SmartDigraph> dij;
@@ -121,6 +120,9 @@ public:
     std::string getName(size_t id) {
         return fileElementNameToId.getKey(id);
     }
+    size_t getId(const std::string& name) {
+        return fileElementNameToId.getValue(name);
+    }
     Graph(const std::string &filename);
 
 
@@ -135,26 +137,13 @@ public:
      * @return                  Maximum branching factor of the associated tree
      */
     size_t generateNaryTree(std::unordered_map<size_t, size_t>& treeToGraphMorphism, std::unordered_map<size_t, std::unordered_set<size_t>>& tree, std::map<size_t, std::string>& treeIdToPathString,
-                            std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv);
+                            std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv, char* rootNameNode = nullptr);
     const std::set<size_t>& getCandidates();
 
     template <typename F> size_t isTherePath(size_t dst, std::map<size_t, size_t> &dstCandidates,  F &callback) {
         // Converting the outer ids to the internal ones
         size_t dstGraph = nodeMap.at(dst);
-        // If I haven't run the search from this node, then initialize the search
-        /*if (rootId != sourceDfsNode)*/ {
-            /*size_t sourceDfsNode = rootId;
-            lemon::Dfs<lemon::SmartDigraph> dfs{g};
-            dfs.reachedMap(rm);
-            lemon::Dijkstra<lemon::SmartDigraph> dij{g, costMap};
-            std::set<size_t> internalLeafCandidates;
-            dfs.init();
-            dfs.addSource(g.nodeFromId(sourceDfsNode));
-            dfs.start();
-            dij.init();
-            dij.addSource(g.nodeFromId(sourceDfsNode));
-            dij.start();
-            maxLength = std::numeric_limits<size_t>::min();*/
+
             std::vector<size_t> noReachedElements;
             int maxLength = -1;
             // bool doInsertInUM = dstCandidates.find(dst) == dstCandidates.end();// perform the insertion only if it hasn't been previously inserted for src.
@@ -173,26 +162,23 @@ public:
                         dstCandidates[original_id] =  it->second+1;  //--
                         callback(original_id, it->second+1);         //--
                         ///maxLength = std::max(maxLength, (int)it->second+2);
-                    } else {
-                        /*if (dstGraph != graph_id)*/ noReachedElements.emplace_back(original_id);
                     }
                 }
 
             }
-            /**if (maxLength == -1)
-                maxLength = 1;
-            for (const auto& notInPath : noReachedElements) {
-                dstCandidates[notInPath] = maxLength;  //--
-                callback(notInPath, maxLength);        //--
-            }*/
             return fw_cost(rootId, dst);
-        }
+
     }
 
    // Getting which is the maximal branching factor of the graph: this is required for the basic metric
    // determining the vectorial size
     size_t maxBranch = std::numeric_limits<size_t>::min();
     size_t height;
+
+    size_t getRootId();
+    int nodeSize();
+
+    std::vector<size_t> getChildren(size_t i);
 };
 
 

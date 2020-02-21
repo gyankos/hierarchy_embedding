@@ -19,6 +19,6 @@ bool subArrayOf(std::vector<size_t>& array, std::vector<size_t>& subarray);
      * @param right     Right coordinate vector
      * @return          Distance
      */
-double euclideanDistance(std::vector<double>& left, std::vector<double>& right);
+double euclideanDistance(const std::vector<double> &left, const std::vector<double> &right);
 
 #endif //HIERARCHY_TESTS_PROPOSAL_UTILS_H

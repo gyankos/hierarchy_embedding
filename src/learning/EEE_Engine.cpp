@@ -10,22 +10,27 @@
 // Constructor
 EEEngine::EEEngine(DistMetricMode metric, const size_t dim_embedding, naryTree &tree,
                    fixed_bimap<std::string, size_t> &bimap,
-                   size_t num_entity_category)
+                   size_t num_entity_category, Graph* graph)
         : entity_category_hierarchy_{metric, dim_embedding, bimap}, treeRef{tree}, bijection{bimap}, num_entity_category{num_entity_category} {
     num_neg_sample_ = 50;
-    entity_category_hierarchy_.InitHierarchy(num_entity_category);
-    InitEntityCategories();
-    ReadHierarchyIdWithLevel();
+
+    if (graph == nullptr) {
+        entity_category_hierarchy_.InitHierarchy(num_entity_category);
+        InitEntityCategories();
+        ReadHierarchyIdWithLevel(treeRef, 0);
+    } else {
+        entity_category_hierarchy_.InitHierarchy(graph->nodeSize());
+        InitEntityCategories();
+        ReadHierarchyIdWithLevel(graph, graph->getRootId(), 0);
+    }
+
 }
 
 EEEngine::~EEEngine() {}
 
 void EEEngine::InitEntityCategories() {
     for (size_t entity_idx = 0; entity_idx < num_entity_category; entity_idx++) {
-        //const int entity_idx = tokens[0];
         Node *entity_node = entity_category_hierarchy_.node(entity_idx);
-        //for (int p_idx = 1; p_idx < tokens.size(); ++p_idx) {
-        //const int category_id = tokens[p_idx];
         const int category_idx = entity_idx + num_entity_category;
         // add parent categories to entity
         entity_node->AddParent(category_idx);
@@ -61,6 +66,29 @@ void EEEngine::ReadHierarchyIdWithLevel(naryTree &tree, size_t levelId) {
     }
 }
 
+void EEEngine::ReadHierarchyIdWithLevel(Graph *tree, size_t entity_idx, size_t levelId) {
+    assert(tree);
+    const size_t category_idx = entity_idx + num_entity_category;
+
+    // Getting the pre-allocated category information
+    Node *category_node = entity_category_hierarchy_.node(category_idx);
+
+    // Each entity has itself as an ancestor, represented as a category node.
+    std::set<size_t> self_as_ancestor;
+    self_as_ancestor.emplace(category_idx);
+    entity_category_hierarchy_.AddAncestors(entity_idx, self_as_ancestor);
+
+    // Iterating over all the possible children within the tree subroot
+    for (const size_t& childId: tree->getChildren(entity_idx)) {
+        const size_t child_category_idx = childId + num_entity_category;
+        category_node->AddChild(child_category_idx);
+        entity_category_hierarchy_.node(child_category_idx)->AddParent(category_idx);
+        category_node->set_level(levelId);
+
+        // Continuing recursively with the other sub-tree nodes.
+        ReadHierarchyIdWithLevel(tree, childId, levelId + 1); // recursive call
+    }
+}
 
 std::vector<Datum> EEEngine::generateData(std::map<std::string, std::set<std::string>> &positiveMap, std::map<std::string, std::set<std::string>> &negativeMap) {
     std::vector<Datum> toRet;

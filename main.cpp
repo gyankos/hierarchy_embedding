@@ -16,8 +16,8 @@
  * @param function
  */
 template <class T> void perform_test(size_t maxBranch, size_t maxHeight, T function) {
-    for (size_t i =/* 2*/maxBranch; i<=maxBranch; i++) {
-        for (size_t j = /*2*/maxHeight; j<=maxHeight; j++) {
+    for (size_t i =/* 2*/2; i<=maxBranch; i++) {
+        for (size_t j = /*2*/2; j<=maxHeight; j++) {
             function(i, j);
         }
     }
@@ -110,35 +110,41 @@ void parhier_testing(size_t maximumBranchingFactor, size_t maximumHeight) {
 #include <unordered_map>
 #include <JLLemma.h>
 #include <tests/tree/TestingTreeBasic.h>
+//#include <tests/graph/TestingGraphBasic1.h>
 #include "Graph.h"
 #include "tests/graph/TestingGraphProposal.h"
 
-int main() {
+void run_proposed_graph_tests() {
+    /// XXX: important: cannot test with Basic metric, because it takes more than 64GB of primary memory to represent that: too computational inefficient to represent
 
-
-#if 0
-    // Correspondence between the node in adj and the node in the graph, so that we can reconstruct all the vectors to be associated to it
-    std::unordered_map<size_t, size_t> treeToGraphMorphism;
-    // Tree representation of the data structure, with new element ids
-    std::unordered_map<size_t, std::unordered_set<size_t>> tree;
-    // path string generated from the adj representation. This can be used to then generate multiple possible elements
-    std::map<size_t, std::string> treeIdToPathString;
-
-    // Filling up all the three data structures provided up above.
-    g.generateNaryTree(treeToGraphMorphism, tree, treeIdToPathString);
-#endif
-
-#if 1
-    std::ifstream file{"noun.txt"};
-    Graph g{file};
-    file.close();
+    Graph g{"mammals.txt"};
     double distanceFactor = 3;
     double decayFactor = 2;
     TestingGraphProposal proposal(distanceFactor, decayFactor, g);
     proposal.run(false);
-#endif
+}
 
-    ///perform_test(7, 5, parhier_testing);
+void perform_testing() {
+    /// -> Performing the tests that are required for the tree part of the paper
+    perform_test(7, 5, testing_learning);
+}
+
+/**
+ *
+ * TODO: 1) Continue to change the Learning part to support the graph: It should be nearly done, just create the learning part.
+ *       2) Change the graph part, so that it is also possible to elect one single node as a root.
+ *       3) Continue, and change also the proposal code accordingly.
+ *       4) If possible, adapt the same optimizations that you performed over the graphs for the tree, too, so to slighly reduce the computation complexity.
+ *
+ * @return
+ */
+
+int main() {
+
+
+
+    run_proposed_graph_tests();
+
 
     /*std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(7, 5);
     TestingProposal testing_dimension_as_branching{7, 3, 2, 5};

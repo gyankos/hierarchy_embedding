@@ -41,30 +41,6 @@ public:
              naryTree& tree);
 
     const std::vector<double>& getPar2HierVector(const std::vector<size_t> &path);
-    /*const std::vector<double>& getPar2HierVector2(const void* ptr, size_t size) {
-        if (!ptr) {
-            return {};
-        } else {
-            std::vector<size_t> x;
-            for (size_t i = 0; i<size; i++) x.emplace_back(((size_t*)ptr)[i]);
-            return getPar2HierVector(x);
-        }
-    }*/
-
-    /*void getTruncatedSVD(const Eigen::MatrixXd& matrix, Eigen::MatrixXd& outMatrix) {
-        Eigen::JacobiSVD<Eigen::MatrixXd> svd(matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
-
-
-        Eigen::MatrixXd matrixU = svd.matrixU();
-        Eigen::MatrixXd matrixV = svd.matrixV();
-        Eigen::MatrixXd matrixS = svd.singularValues();
-
-        Eigen::MatrixXd truncatedU = matrixU.block(0,0,matrixU.rows()-1,k);
-        Eigen::MatrixXd truncatedV = matrixV.block(0,0,k,matrixV.cols()-1);
-        Eigen::MatrixXd truncatedS = matrixV.block(0,0,k,k);
-
-        outMatrix = truncatedU * (matrixS * matrixV);
-    }*/
 
     void getTruncatedVT(const Eigen::MatrixXd& matrix, Eigen::MatrixXd& outMatrix, const size_t kDim);
 

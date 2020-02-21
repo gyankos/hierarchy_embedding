@@ -41,7 +41,7 @@ TestingTreeExternal::TestingTreeExternal(size_t maximumBranchingFactor, size_t m
                     vector.emplace_back(std::stod(ret[i]));
                 }
             }
-            trainedExtenralVectors.insert(std::make_pair(dimensionName, vector));
+            memoization_map.insert(std::make_pair(dimensionName, vector));
         }
     }
 }

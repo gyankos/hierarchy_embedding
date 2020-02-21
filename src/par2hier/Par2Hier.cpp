@@ -43,7 +43,6 @@ const std::vector<double> &Par2Hier::getPar2HierVector(const std::vector<size_t>
     if (!path.empty()) {
         for (const size_t& currPos : path) {
             currentNode = &currentNode->getIthChild(currPos-1);
-            //to_return[currentNode->getId()] = parentChildNo;
             parentChildNo = currentNode->getChildNo();
         }
     }
