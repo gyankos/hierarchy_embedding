@@ -206,7 +206,7 @@ public:
             initialize_hierarchy_with_all_paths(element);
         finalizeDataIngestion();
 
-        double path_length_size = 0, spearman = 0,  precision = 0,  precision_narrow = 0, ncdg = 0, smallerNotCandidate = 0, recall =0;
+        double path_length_size = 0, spearman = 0,  precision_leqK = 0,  precision_narrow = 0, ncdg = 0, smallerNotCandidate = 0, recall_gtK =0;
 
         MultithreadWrap<struct result_map> pool{(unsigned int)ls.size(), IS_MULTITHREADED};
 
@@ -250,23 +250,25 @@ public:
         std::cout << "Summing up the maps..." << std::endl;
         for (auto& x : pool.foreach()) {
             //auto x = y.get();
+#ifndef update_local
 #define update_local(field, currFuture)           (field) += currFuture .  field
+#endif
             update_local(path_length_size, x);
             update_local(spearman, x);
-            update_local(precision, x);
+            update_local(precision_leqK, x);
             update_local(precision_narrow, x);
             update_local(ncdg, x);
-            update_local(recall, x);
+            update_local(recall_gtK, x);
             //update_local(smallerNotCandidate, x);
         }
         //futures.clear();
 
         std::cout << "Spearman, for top-k                                              " << spearman / path_length_size << std::endl;
         //print_result_maps(path_length_size, spearman);
-        std::cout << "Precision, for top-k scores                                      " << precision / path_length_size << std::endl;
+        std::cout << "Precision, for top-k scores                                      " << precision_leqK / path_length_size << std::endl;
         //print_result_maps(path_length_size, precision);
-        std::cout << "Precision, for top-k elements                                    " << precision_narrow / path_length_size << std::endl;
-        std::cout << "Recall, for non top-k elements (wrongly matching the candidates) " << recall / path_length_size << std::endl;
+        ///std::cout << "Precision, for top-k elements                                    " << precision_narrow / path_length_size << std::endl;
+        std::cout << "Recall, for non top-k elements (wrongly matching the candidates) " << recall_gtK / path_length_size << std::endl;
         //std::cout << "More similar than worst top-1 not candidate, not current element " << smallerNotCandidate / path_length_size << std::endl;
         //print_result_maps(path_length_size, precision_narrow);
     }

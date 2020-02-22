@@ -144,7 +144,8 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
             mostFrequentValues.emplace(it3.first);
         }
     }
-/**
+
+#ifdef STATS
     std::cout << " branching factor " << maxBranch << " could be 'decreased' by the JL lemma to at least " << dimension_extimate((size_t)g.nodeNum(), 3.0/std::pow(2.0, height)) <<  std::endl;
     std::cout << " tree height = " << height << std::endl;
     std::cout << " maximum number of vectors per node: " << isTree << std::endl;
@@ -153,10 +154,10 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
     std::cout << " most frequent vector values: " << mostFrequentValues << " with frequency " << mostFrequentVal << " which, normalized, is " << (((double)mostFrequentVal)/((double)g.nodeNum())) <<  std::endl;
     std::cout << " #nodes " << g.nodeNum() << std::endl;
     std::cout << " #candidate test leaves " << internalLeafCandidates.size() << ", which are " << internalLeafCandidates << std::endl;
+#endif
 
-    std::cout << "Johnson (trivial) algorithm for all the possible pairs" << std::endl;*/
+    std::cout << "Johnson (trivial) algorithm for all the possible pairs" << std::endl;
     johnsonAlgorithm();
-///    std::cout << "... done! " << std::endl;
 
 }
 
