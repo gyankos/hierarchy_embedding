@@ -144,27 +144,27 @@ void run_proposed_graph_tests() {
     {
         std::cout << "Proposed" << std::endl;
         TestingGraphProposal proposal(distanceFactor, decayFactor, g);
-        proposal.run(false);
+        proposal.run(true);
     }
     {
         std::cout << "Relevance" << std::endl;
         TestingGraphBasic1 proposal(g);
-        proposal.run(false);
+        proposal.run(true);
     }
     {
         std::cout << "Local Density (beta=0.75) " << std::endl;
         TestingGraphBasic2 proposal(g, 0.75);
-        proposal.run(false);
+        proposal.run(true);
     }
     {
         std::cout << "Multiple Descent (beta=0.75, alpha=0.5) " << std::endl;
         TestingGraphBasic3 proposal(g, 0.75, 0.5);
-        proposal.run(false);
+        proposal.run(true);
     }
     {
         std::cout << "Multiple Descent (beta=0.75, alpha=1) " << std::endl;
         TestingGraphBasic3 proposal(g, 0.75, 1.0);
-        proposal.run(false);
+        proposal.run(true);
     }
 }
 
