@@ -202,11 +202,6 @@ public:
         MultithreadWrap<struct result_map> pool{(unsigned int)std::thread::hardware_concurrency(), isMultithreaded};
         std::vector<std::vector<size_t>> splitNodeCandidatesId = SplitVector<size_t, std::set<size_t>>(passGraph.getCandidates(), threadNo);
 
-
-        //std::vector<std::future<struct result_map >> futures;
-        //thread_pool pool(ls.size());
-
-        std::cout << "Now Computing..." << std::endl;
         // Performing the test for each node in the hierarchy, root excluded
         for (const std::vector<size_t>& y: splitNodeCandidatesId) {
             pool.poolExecute([this, splitNodeCandidatesId](const std::vector<size_t> & candidateSublist) {
@@ -214,34 +209,11 @@ public:
                 std::function<double(const ForComparison&,const ForComparison&)> exp = this->exportSimilarity();
                 struct result_map maps;
                 for (const size_t & candidateId : candidateSublist) {
-                    //size_t current_path_length = candidateId.size();
-                    //if (current_path_length != maximumHeight) continue;
-
-                    //std::cout << "candidate " << this->passGraph.getName(candidateId) << " #" << candidateId << std::endl;
-                    // Increment the path length size by one and, if not present, insert 1.0
                     std::map<size_t, size_t> rankedCandidates;
                     TestingGraphLambda<ForComparison> tgl{candidateId, rankedCandidates, lam, exp};
                     int maxLength;
                     this->passGraph.isTherePath(candidateId, rankedCandidates, tgl,maxLength);
                     tgl.finalize(maps, maxLength);
-                    //std::cout << "done" << std::endl;
-
-                    // Generating all the candidates, represented as indices, as relevant is-a nodes for the current candidate.
-                    //const std::vector<std::vector<size_t>> &candidates = generateAllPossibleSubpaths(x);
-                    ///std::pair<double,double> minmax = this->minmaxCandidates(candidateId, /*splitNodeCandidatesId, */rankedCandidates);
-
-                    // Testing the precision at k representation
-                    //double currentPrecision = this->Spearman(x, candidates);
-                    //if (DEBUG)  std::cout << "Current precision of " << currentPrecision << " for length " << current_path_length << std::endl;
-                    //maps.spearman += this->Spearman(candidateId, rankedCandidates); // Getting the classification difference between the two
-                    ///double test = this->Precision(candidateId, rankedCandidates);
-                    //assert(test == 1.0);
-                    ///maps.precision += test;
-                    ///maps.precision_narrow += this->Precision_narrow(candidateId, rankedCandidates);
-                    //maps.ncdg += this->NDCG(candidateId, rankedCandidates);
-                    ///maps.recall += minmax.first;
-                    ///maps.smallerNotCandidate += minmax.second;+
-                    ///std::cout << maps.precision << std::endl;
                 }
 
                 return maps;
@@ -254,24 +226,16 @@ public:
 #define update_local(field, currFuture)           (field) += currFuture .  field
             update_local(path_length_size, x);
             update_local(spearman, x);
-            update_local(precision, x);
-            //update_local(precision_narrow, x);
-            //update_local(ncdg, x);
-            update_local(recall, x);
+            update_local(precision_leqK, x);
+            update_local(recall_gtK, x);
         }
 
         std::cout << "Spearman, for top-k                                              " << spearman / path_length_size << std::endl;
-        //print_result_maps(path_length_size, spearman);
         std::cout << "Precision, for top-k scores                                      " << precision / path_length_size << std::endl;
-        //print_result_maps(path_length_size, precision);
-        //std::cout << "Precision, for top-k elements                                    " << precision_narrow / path_length_size << std::endl;
         std::cout << "Recall, for non top-k elements (wrongly matching the candidates) " << recall / path_length_size << std::endl;
-        //std::cout << "More similar than worst top-1 not candidate, not current element " << smallerNotCandidate / path_length_size << std::endl;
-        //print_result_maps(path_length_size, precision_narrow);
     }
 
 protected:
-    /// ???? virtual void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) = 0;
     virtual ForComparison getVectorRepresentation(const size_t& current) const = 0;
     std::function<ForComparison(size_t)> getVRLambda() const {
         return [this](size_t x) {
@@ -295,7 +259,8 @@ protected:
     }
 
     /**
-     * ?????
+     * Method used to precompute all the vectorial representations
+     *
      * @param graph
      */
     virtual void passGraphDataIfRequired(const Graph& graph) = 0;

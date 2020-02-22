@@ -236,10 +236,10 @@ public:
                     //double currentPrecision = this->Spearman(x, candidates);
                     //if (DEBUG)  std::cout << "Current precision of " << currentPrecision << " for length " << current_path_length << std::endl;
                     maps.spearman += this->Spearman(x, candidates); // Getting the classification difference between the two
-                    maps.precision += this->Precision(x, candidates);
+                    maps.precision_leqK += this->Precision(x, candidates);
                     maps.precision_narrow += this->Precision_narrow(x, candidates);
                     maps.ncdg += this->NDCG(x, candidates);
-                    maps.recall += minmax.first;
+                    maps.recall_gtK += minmax.first;
                     maps.smallerNotCandidate += minmax.second;
                 }
 
