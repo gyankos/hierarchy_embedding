@@ -60,7 +60,7 @@ std::vector<double> operator+=(std::vector<double> &lhs, const std::vector<doubl
 }
 
 double max_cosine_similarity(const std::vector<std::vector<double>> &lhs, const std::vector<std::vector<double>> &rhs) {
-    double sim = std::numeric_limits<double>::min();
+    double sim = 0;
     for (auto x : lhs) {
         for (auto y: lhs) {
             sim = std::max(sim, cosine_similarity(x,y));

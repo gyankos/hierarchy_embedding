@@ -20,6 +20,7 @@
 #include "multithreaded/thread_pool.h"
 #include <Graph.h>
 #include "TestingTree.h"
+#include "TestingGraphLambda.h"
 
 #define         DEBUG           (false)
 
@@ -48,146 +49,6 @@ std::vector<std::vector<T>> SplitVector(const iterableT& vec, size_t n)
 
     return outVec;
 }
-
-template <typename ForComparison>
-struct TestingGraphLambda {
-    const size_t& current;
-    std::function<ForComparison(size_t)>& getVectorRepresentation;
-    std::function<double(const ForComparison&,const ForComparison&)>& similarity;
-    std::map<size_t, size_t>& currentRankMap;
-
-    PollMap<double, size_t> pollMap;
-
-    TestingGraphLambda(const size_t& current, std::map<size_t, size_t>& currentRankMap, std::function<ForComparison(size_t)>& getVectorRepresentation,
-                       std::function<double(const ForComparison&,const ForComparison&)>& similarity) :
-    current{current}, currentRankMap{currentRankMap}, getVectorRepresentation{getVectorRepresentation}, similarity{similarity} {
-
-    }
-
-    size_t map_size = 0;
-
-    double min_minmax = std::numeric_limits<double>::max();
-    std::vector<size_t> minCandidates_minmax;
-    double max_minmax = std::numeric_limits<double>::min();
-    std::vector<size_t> maxCandidates_minmax;
-
-    std::set<size_t>    precision;
-    std::set<size_t>    candidates;
-    size_t              retrieved_for_precision = 0;
-    size_t              noCandidates;
-
-
-    double              expectedMeanPollRank = 0.0;
-
-    void operator()(size_t first, size_t second) {
-        //std::cout << first << "," << second << std::endl;
-        double score = similarity(getVectorRepresentation(current), getVectorRepresentation(first));
-
-        // Spearman
-        expectedMeanPollRank += second;
-
-        // MinMax computation
-        //if (first != current) {
-            /// ???????
-            if (score < min_minmax) {
-                minCandidates_minmax.clear();
-                minCandidates_minmax.emplace_back(first);
-                min_minmax = score;
-            } else if (score == min_minmax) {
-                minCandidates_minmax.emplace_back(first);
-            }
-            if (score > max_minmax) {
-                maxCandidates_minmax.clear();
-                maxCandidates_minmax.emplace_back(first);
-            } else if (score == max_minmax) {
-                maxCandidates_minmax.emplace_back(first);
-            }
-            max_minmax = std::max(max_minmax, score);
-        //}
-        // MiniMax computation
-
-        // Globals
-        pollMap.add(score, first);
-        map_size++;
-    }
-
-    void finalize(struct result_map& maps) {
-        pollMap.resize(currentRankMap.size());
-
-        // MiniMax computation
-        double recallToBeZero = 0.0;
-        for (const size_t& current : minCandidates_minmax) {
-            //std::string current = size_vector_to_string(x);
-            if (currentRankMap.find(current) != currentRankMap.end())
-                recallToBeZero += 1.0;
-        }
-        maps.recall += recallToBeZero / minCandidates_minmax.size();
-        //maps.smallerNotCandidate +=  maxCandidates_minmax.size() / (1.0 + maxCandidates_minmax.size());
-        // MiniMax computation
-
-
-        // Globals: generating the candidates that are just the ones returned by the algorithm itself
-        maps.path_length_size += 1.0;
-        //PollMap<double,size_t> pollMap{map_size};
-        //generateTopKCandidates(pollMap, current);
-        const std::map<double, std::set<size_t>> &castor_et_pollux = pollMap.getPoll();
-
-        // Spearman + NCDG
-        double NDCG_pos = 1.0;
-        double NDCG_dcg_p = 0.0;
-        double NDCG_idcg_p = 0.0;
-
-        expectedMeanPollRank /= ((double)map_size);
-
-        size_t inferredPollCurrentPos = castor_et_pollux.size();
-        double inferredMeanPollRank = 0.0;
-        size_t overallX = 0;
-        std::vector<double> precalculateX;
-        std::vector<double>    calculateY;
-        double                 calculateYSquaredSummed = 0.0;
-        for (const auto& it : castor_et_pollux) {
-            size_t N = it.second.size();
-            bool doNCDG = false/*(N > 0)*/;
-            double div;
-            double toSum = 0.0;
-            double reli;
-
-            overallX += N;
-            for (const auto& x : it.second) {
-                if (currentRankMap.find(x) != currentRankMap.end()) {
-                    if(candidates.insert(x).second)
-                        retrieved_for_precision+=1.0;
-                }
-
-                double tmpY = ((double)currentRankMap[x])-expectedMeanPollRank;
-                calculateYSquaredSummed += std::pow(tmpY, 2.0);
-                calculateY.emplace_back(tmpY);
-                precalculateX.emplace_back(inferredPollCurrentPos);
-                toSum += (double)currentRankMap[x];
-            }
-            for (size_t i = 0; i<N; i++)
-            inferredMeanPollRank += (inferredPollCurrentPos * N);
-            inferredPollCurrentPos--;
-
-        }
-        inferredMeanPollRank /= ((double)overallX);
-
-        /// Precision
-        maps.precision += ((double)retrieved_for_precision)/((double)map_size);
-
-        double numeratore = 0.0;
-        double                 calculateXSquaredSummed = 0.0;
-        for (size_t i = 0; i<overallX; i++) {
-            double tmpX = (precalculateX[i] - inferredMeanPollRank);
-            calculateXSquaredSummed += std::pow(tmpX, 2.0);
-            numeratore += tmpX * calculateY[i];
-        }
-
-        maps.spearman += (overallX > 1) ? numeratore / std::sqrt(calculateXSquaredSummed * calculateYSquaredSummed) : 1.0-abs(inferredMeanPollRank-expectedMeanPollRank)/(1+abs(inferredMeanPollRank-expectedMeanPollRank));
-    }
-
- };
-
 template <typename ForComparison> class TestingGraph {
 protected:
     size_t maximumBranchingFactor, maximumHeight;
@@ -360,8 +221,9 @@ public:
                     // Increment the path length size by one and, if not present, insert 1.0
                     std::map<size_t, size_t> rankedCandidates;
                     TestingGraphLambda<ForComparison> tgl{candidateId, rankedCandidates, lam, exp};
-                    this->passGraph.isTherePath(candidateId, rankedCandidates, tgl);
-                    tgl.finalize(maps);
+                    int maxLength;
+                    this->passGraph.isTherePath(candidateId, rankedCandidates, tgl,maxLength);
+                    tgl.finalize(maps, maxLength);
                     //std::cout << "done" << std::endl;
 
                     // Generating all the candidates, represented as indices, as relevant is-a nodes for the current candidate.
@@ -413,21 +275,21 @@ protected:
     virtual ForComparison getVectorRepresentation(const size_t& current) const = 0;
     std::function<ForComparison(size_t)> getVRLambda() const {
         return [this](size_t x) {
-            return getVectorRepresentation(x);
+            return this->getVectorRepresentation(x);
         };
     }
 
     virtual double similarity(const ForComparison& lhs, const ForComparison& rhs) const = 0;
     std::function<double(const ForComparison&,const ForComparison&)> exportSimilarity() const {
         return [this](const ForComparison& x,const ForComparison& y) {
-            return similarity(x,y);
+            return this->similarity(x,y);
         };
     }
 
     void  generateTopKCandidates(PollMap<double, size_t>& map, const size_t& current) {
         auto allVectors = getVectorRepresentation(current);
         for (auto & x : this->treeToGraphMorphism) {
-            double  score = similarity(allVectors, getVectorRepresentation(x.second));
+            double  score = this->similarity(allVectors, getVectorRepresentation(x.second));
             map.add(score, x.second);
         }
     }

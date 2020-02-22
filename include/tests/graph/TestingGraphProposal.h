@@ -28,7 +28,7 @@ protected:
     }
 
     double similarity(const std::vector<std::vector<size_t>> &lhs, const std::vector<std::vector<size_t>> &rhs) const override {
-        double similarity = std::numeric_limits<double>::min();
+        double similarity = 0;
         for (const auto x : lhs) {
             for (const auto y : rhs) {
                 double distanceMetric =  prop->rankingMetric(x, y);
@@ -58,6 +58,8 @@ protected:
         // memoizing the vector representations
         std::cout << "Taking some time to memoize the computations..." << std::endl;
         for (auto it : this->morphismInv) {
+            if (it.first == 21 || it.first == 20)
+                std::cerr << "DEBUG" << std::endl;
             std::vector<std::vector<size_t>> result;
             for (const size_t& x : it.second) {
                 result.emplace_back(

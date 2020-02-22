@@ -140,12 +140,12 @@ public:
                             std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv, char* rootNameNode = nullptr);
     const std::set<size_t>& getCandidates();
 
-    template <typename F> size_t isTherePath(size_t dst, std::map<size_t, size_t> &dstCandidates,  F &callback) {
+    template <typename F> size_t isTherePath(size_t dst, std::map<size_t, size_t> &dstCandidates,  F &callback, int& maxLength) {
         // Converting the outer ids to the internal ones
         size_t dstGraph = nodeMap.at(dst);
 
-            std::vector<size_t> noReachedElements;
-            int maxLength = -1;
+            std::unordered_set<size_t> noReachedElements;
+            maxLength = -1;
             // bool doInsertInUM = dstCandidates.find(dst) == dstCandidates.end();// perform the insertion only if it hasn't been previously inserted for src.
             for (const auto& graph_id_to_original : invMap) {
                 size_t graph_id = graph_id_to_original.first;
@@ -161,11 +161,17 @@ public:
                         //if (doInsertInUM)
                         dstCandidates[original_id] =  it->second+1;  //--
                         callback(original_id, it->second+1);         //--
-                        ///maxLength = std::max(maxLength, (int)it->second+2);
+                        maxLength = std::max(maxLength, (int)it->second+2);
+                    } else {
+                        // Observe: I'm not providing the element as a candidate.
+                        noReachedElements.emplace(original_id);
+
                     }
                 }
 
             }
+            for (const size_t& r : noReachedElements)
+                callback(r, maxLength);
             return fw_cost(rootId, dst);
 
     }

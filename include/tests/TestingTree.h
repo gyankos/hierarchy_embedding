@@ -18,29 +18,10 @@
 #include "PollMap.h"
 #include "stats_utils.h"
 #include "multithreaded/thread_pool.h"
+#include "ResultMap.h"
 
 #define         DEBUG           (false)
 
-struct result_map {
-    double path_length_size = 0;
-    double spearman = 0;
-    double precision = 0;
-    double precision_narrow = 0;
-    double ncdg = 0;
-    double recall = 0;
-    double smallerNotCandidate = 0;
-
-    result_map& operator+=(const result_map& rhs) {
-        path_length_size += rhs.path_length_size;
-        spearman += rhs.spearman;
-        precision += rhs.precision;
-        precision_narrow += rhs.precision_narrow;
-        ncdg += rhs.ncdg;
-        recall += rhs.recall;
-        smallerNotCandidate += rhs.smallerNotCandidate;
-        return *this;
-    }
-};
 
 template <typename ForComparison>
 class TestingTree {
