@@ -96,3 +96,10 @@ double euclideanDistance(const std::vector<double> &left, const std::vector<doub
     }
     return std::sqrt(sum);
 }
+
+double poincarreDistance(const std::vector<double> &left, const std::vector<double> &right) {
+    double num = std::pow(euclideanDistance(left, right), 2);
+    double den = (1-vectorNorm2(left.begin(), left.end())) * (1-vectorNorm2(right.begin(), right.end()));
+    return std::acosh(1+2 * (num/den));
+}
+

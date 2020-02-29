@@ -5,6 +5,7 @@
 #ifndef HIERARCHY_TESTS_TESTINGTREE_H
 #define HIERARCHY_TESTS_TESTINGTREE_H
 
+#include <chrono>
 #include <vector>
 #include <string>
 #include <proposal/proposal_utils.h>
@@ -15,6 +16,7 @@
 #include <iostream>
 #include <multithreaded/MultithreadWrap.h>
 #include <cassert>
+#include <unordered_set>
 #include "PollMap.h"
 #include "stats_utils.h"
 #include "multithreaded/thread_pool.h"
@@ -29,165 +31,6 @@ protected:
     size_t maximumBranchingFactor, maximumHeight;
 
 private:
-    double Spearman(const std::vector<size_t>& current, const std::vector<std::vector<size_t>> &candidates) {
-        std::set<std::string> candidatesSet;
-        double noCandidates = candidates.size();
-        double retrieved = 0.0;
-        std::string currentString = size_vector_to_string(current);
-        std::map<std::string, size_t> toretMap, currentRankMap;
-
-        for (auto& y : candidates) {
-            std::string tmp = size_vector_to_string(y);
-            candidatesSet.emplace(size_vector_to_string(y));
-            currentRankMap[tmp] = candidates.size() - y.size() + 1;
-        }
-
-        if (DEBUG) std::cout << "Spearman Candidates: " << candidatesSet << " for element " << current << std::endl;
-        PollMap<double,std::string> pollMap{candidatesSet.size()};
-        generateTopKCandidates(pollMap, current);
-        pollMap.getRankedPoll(toretMap);
-
-        for (std::map<std::string, size_t>::iterator it = toretMap.begin(); it != toretMap.end(); it++) {
-            if (candidatesSet.find(it->first) == candidatesSet.end()) {
-                currentRankMap[it->first] = candidates.size() + 2;
-            }
-        }
-
-        return Spearmam_rank_correlation_coefficient<std::string>(toretMap, currentRankMap);
-    }
-
-    double NDCG(const std::vector<size_t>& current, const std::vector<std::vector<size_t>> &candidates) {
-        std::set<std::string> candidatesSet;
-        double noCandidates = candidates.size();
-        double retrieved = 0.0;
-        std::string currentString = size_vector_to_string(current);
-        std::map<std::string, size_t> toretMap, currentRankMap;
-
-        for (auto& y : candidates) {
-            std::string tmp = size_vector_to_string(y);
-            candidatesSet.emplace(size_vector_to_string(y));
-            currentRankMap[tmp] =  y.size();
-        }
-
-        if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
-        PollMap<double,std::string> pollMap{candidatesSet.size()};
-        generateTopKCandidates(pollMap, current);
-        const std::map<double, std::set<std::string>> &poll = pollMap.getPoll();
-
-        return normalized_discounted_cumulative_gain<std::string>(poll, currentRankMap);
-    }
-
-    double Precision(const std::vector<size_t>& current, const std::vector<std::vector<size_t>> &candidates) {
-        std::set<std::string> candidatesSet;
-        double retrieved = 0.0;
-        std::string currentString = size_vector_to_string(current);
-        std::map<std::string, size_t> toretMap, currentRankMap;
-
-        for (auto& y : candidates) {
-            std::string tmp = size_vector_to_string(y);
-            candidatesSet.emplace(size_vector_to_string(y));
-            currentRankMap[tmp] = candidates.size() - y.size() + 1;
-        }
-
-        if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
-        PollMap<double,std::string> pollMap{candidatesSet.size()};
-        generateTopKCandidates(pollMap, current);
-        std::multimap<double, std::string> mmap;
-        pollMap.getPoll(mmap);
-        double noCandidates = mmap.size();
-        std::set<std::string> k;
-        for (auto it = mmap.rbegin(); it != mmap.rend(); it++) {
-            if (candidatesSet.find(it->second) != candidatesSet.end()) {
-                if(k.insert(it->second).second)
-                    retrieved+=1.0;
-            }
-        }
-        assert(retrieved <= noCandidates);
-        return retrieved / noCandidates;
-    }
-
-    double Precision_narrow(const std::vector<size_t>& current, const std::vector<std::vector<size_t>> &candidates) {
-        std::set<std::string> candidatesSet;
-        double retrieved = 0.0;
-        std::string currentString = size_vector_to_string(current);
-        std::map<std::string, size_t> toretMap, currentRankMap;
-
-        for (auto& y : candidates) {
-            std::string tmp = size_vector_to_string(y);
-            candidatesSet.emplace(size_vector_to_string(y));
-            currentRankMap[tmp] = candidates.size() - y.size() + 1;
-        }
-
-        if (DEBUG) std::cout << "Candidates: " << candidatesSet << " for element " << current << std::endl;
-        double currentlyGot = 0.0;
-        PollMap<double,std::string> pollMap{candidatesSet.size()};
-        generateTopKCandidates(pollMap, current);
-        pollMap.getNarrowRankedPoll(toretMap);
-        std::set<std::string> k;
-
-        for (auto& cp : toretMap) {
-            if (candidatesSet.find(cp.first) != candidatesSet.end()) {
-                if (k.insert(cp.first).second)
-                    retrieved += 1.0;
-                //std::cout << "<" << cp.first << ", " << cp.second << "> = " << std::endl;
-
-            }
-            currentlyGot += 1.0;
-            //if (DEBUG) std::cout << "<" << cp.first << ", " << cp.second << ">" << std::endl;
-        }
-        //std::cout << std::endl;
-        assert(retrieved <= currentlyGot);
-        return retrieved / currentlyGot;
-    }
-
-
-    std::pair<double,double> minmaxCandidates(const std::vector<size_t>& current, const std::vector<std::vector<std::vector<size_t>>>& z, const std::vector<std::vector<size_t>> &candidates) {
-        double min = std::numeric_limits<double>::max();
-        std::vector<std::vector<size_t >> minCandidates;
-        double max = std::numeric_limits<double>::min();
-        std::vector<std::vector<size_t >> maxCandidates;
-
-        // Getting all the elements required for Precision
-        std::set<std::string> candidatesSet;
-        std::string currentString = size_vector_to_string(current);
-        for (auto& y : candidates) {
-            std::string tmp = size_vector_to_string(y);
-            candidatesSet.emplace(size_vector_to_string(y));
-        }
-
-        std::string currentStirng = size_vector_to_string(current);
-        for (const std::vector<std::vector<size_t>>& candidates : z) {
-            for (auto &x : candidates) {
-                std::string x_tmp = size_vector_to_string(x);
-                if (x_tmp != currentStirng) {
-                    double z = similarity(getVectorRepresentation(current), getVectorRepresentation(x));
-                    if (z < min) {
-                        minCandidates.clear();
-                        minCandidates.emplace_back(x);
-                        min = z;
-                    } else if (z == min) {
-                        minCandidates.emplace_back(x);
-                    }
-                    if (z > max) {
-                        maxCandidates.clear();
-                        maxCandidates.emplace_back(x);
-                    } else if (z == max) {
-                        maxCandidates.emplace_back(x);
-                    }
-                    max = std::max(max, z);
-                }
-            }
-        }
-
-        double recallToBeZero = 0.0;
-        for (const std::vector<size_t>& x : minCandidates) {
-            std::string current = size_vector_to_string(x);
-            if (candidatesSet.find(current) != candidatesSet.end())
-                recallToBeZero += 1.0;
-        }
-
-        return std::make_pair(recallToBeZero/minCandidates.size(), maxCandidates.size()/(1.0+maxCandidates.size()));
-    }
 
 
 public:
@@ -197,23 +40,25 @@ public:
 
 
 
-    void run(std::vector<std::vector<std::vector<size_t>>>& ls) {
+    struct result_map run(std::vector<std::vector<std::vector<size_t>>>& ls) {
         // Generating all the possible nodes for the hierarchy of choice
         //const std::vector<std::vector<size_t>> &ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
-        std::cout << "Tree Generation" << std::endl;
+        //std::cout << "Tree Generation" << std::endl;
         initialize_hierarchy_with_all_paths({{}});
         for (auto& element : ls)
             initialize_hierarchy_with_all_paths(element);
         finalizeDataIngestion();
 
-        double path_length_size = 0, spearman = 0,  precision_leqK = 0,  precision_narrow = 0, ncdg = 0, smallerNotCandidate = 0, recall_gtK =0;
+        //double path_length_size = 0, spearman = 0,  precision_leqK = 0,  precision_narrow = 0, ncdg = 0, smallerNotCandidate = 0, recall_gtK =0;
 
         MultithreadWrap<struct result_map> pool{(unsigned int)ls.size(), IS_MULTITHREADED};
 
         //std::vector<std::future<struct result_map >> futures;
         //thread_pool pool(ls.size());
 
-        std::cout << "Now Computing..." << std::endl;
+        //std::cout << "Now Computing..." << std::endl;
+        std::chrono::time_point<std::chrono::system_clock> now =
+                std::chrono::system_clock::now();
         // Performing the test for each node in the hierarchy, root excluded
         for (auto& y: ls) {
             pool.poolExecute
@@ -223,54 +68,132 @@ public:
                 for (auto& x : y) {
                     size_t current_path_length = x.size();
 
-                    if (current_path_length != maximumHeight) continue;
+                    if (current_path_length != maximumHeight) continue; // For simplicity of the testing's sake, only testing the elements starting from the leaves
 
-                    // Increment the path length size by one and, if not present, insert 1.0
-                    maps.path_length_size += 1.0;
+                    
+                    //const auto VRLambda = getVRLambda();
+                    //const auto sim = exportSimilarity();
+                    std::map<std::string, size_t> currentRankMap;
+                    std::map<double, std::set<std::string>> castor_et_pollux;
+                    size_t kSplit = 0;
+                    ForComparison currentv = this->getVectorRepresentation(x);
 
-                    // Generating all the candidates, represented as indices, as relevant is-a nodes for the current candidate.
-                    const std::vector<std::vector<size_t>> &candidates = generateAllPossibleSubpaths(x);
+                    {
+                        // All the possible paths that we consider as valid are the ones in this range
+                        const std::vector<std::vector<size_t>> &candidates = generateAllPossibleSubpaths(x);
+                        // Generate Expected Ranking
+
+                        for (auto& y : candidates) {
+                            std::string tmp = size_vector_to_string(y);
+                            size_t expectedRank = candidates.size() - y.size();
+                            currentRankMap[tmp] = expectedRank;
+                            kSplit = std::max(kSplit, expectedRank);
+                        }
+                        auto v = this->getVectorRepresentation({});
+                        double score = this->similarity(currentv, v);
+                        castor_et_pollux[score].emplace(size_vector_to_string({}));
+                        for (const auto& all : ls) {
+                            for (const auto& toRank : all) {
+                                auto v = this->getVectorRepresentation(toRank);
+                                double score = this->similarity(currentv, v);
+                                castor_et_pollux[score].emplace(size_vector_to_string(toRank));
+                            }
+                        }
+                    }
+
+                    double sumX = 0, sumY = 0;
+
+                    size_t inferredPollCurrentPos = 1;
+                    size_t overallX = 0;
+                    std::vector<double> calculateX;
+                    std::vector<double>    calculateY;
+                    auto it = castor_et_pollux.rbegin();
+
+                    std::unordered_set<std::string>    candidates;
+                    std::unordered_set<std::string>    candidates_recall;
+
+                    double retrieved_for_precision = 0, recallToBeZero = 0.0;
+                    double precisionNumber = 0, recallNumber = 0;
+
+                    double overK = 0;
+                    while (it != castor_et_pollux.rend()) { // Iterating over the current implementation's ranked elements from the smaller to the largest
+                        size_t N = it->second.size();
+
+                        overallX += N;
+                        for (const auto& x : it->second) {
+                            auto it2 = currentRankMap.find(x);
+                            if (inferredPollCurrentPos > kSplit) { // If I am already past the K elements, then I can only intercept the real positive values with a recall measure
+                                recallNumber++;
+                                if (it2 != currentRankMap.end()) {
+                                    if(candidates_recall.insert(x).second)
+                                        recallToBeZero+=1.0;
+                                }
+                            } else {
+                                precisionNumber++;
+                                if (it2 != currentRankMap.end()) { // If I am below the K elements, I suppose that I can use this information to reconstruct the path
+                                    if(candidates.insert(x).second)
+                                        retrieved_for_precision+=1.0;
+                                }
+                            }
+
+                            // Determining the rank that is provided in the data structure: if it was not there, then it means that it is not a valid candidate, and hence it will be mapped in the last ranked position
+                            double expectedPollCurrentPos = (it2 != currentRankMap.end()) ? ((double)it2->second) : (((double)kSplit+1));
+                            calculateY.emplace_back(expectedPollCurrentPos);
+                            calculateX.emplace_back(inferredPollCurrentPos);
+                            sumY += expectedPollCurrentPos;
+                            sumX += inferredPollCurrentPos;
+                        }
+                        inferredPollCurrentPos++;
+                        it++;
+                    }
+
+                    // Calculating precision and recall
+                    maps.precision_leqK += ((double)retrieved_for_precision) / (precisionNumber);
+                    maps.recall_gtK    += (recallNumber == 0.0) ? 0.0 : ((double)recallToBeZero) / (recallNumber);
+
+                    // Last, calculating correlation coefficient
+                    double numeratore = 0.0;
+                    double                 calculateXSquaredSummed = 0.0;
+                    double                 calculateYSquaredSummed = 0.0;
+                    sumY /= ((double)overallX);
+                    sumX /= ((double)overallX);
+                    for (size_t i = 0; i<overallX; i++) {
+                        double tmpX = (((double) calculateX[i]) - sumX);
+                        double tmpY = (((double) calculateY[i]) - sumY);
+                        calculateXSquaredSummed += std::pow(tmpX, 2.0);
+                        calculateYSquaredSummed += std::pow(tmpX, 2.0);
+                        numeratore += (tmpX) * (tmpY);
+                    }
+                    maps.spearman += (numeratore > 0) ? numeratore / std::sqrt(calculateXSquaredSummed * calculateYSquaredSummed) : 0;
+                    maps.path_length_size += 1;
+
+                    /*maps.path_length_size += 1.0;
                     std::pair<double,double> minmax = this->minmaxCandidates(x, ls, candidates);
-
-                    // Testing the precision at k representation
-                    //double currentPrecision = this->Spearman(x, candidates);
-                    //if (DEBUG)  std::cout << "Current precision of " << currentPrecision << " for length " << current_path_length << std::endl;
                     maps.spearman += this->Spearman(x, candidates); // Getting the classification difference between the two
-                    maps.precision_leqK += this->Precision(x, candidates);
-                    maps.precision_narrow += this->Precision_narrow(x, candidates);
-                    maps.ncdg += this->NDCG(x, candidates);
-                    maps.recall_gtK += minmax.first;
-                    maps.smallerNotCandidate += minmax.second;
+                    maps.precision_leqK += this->Precision(x, candidates);*/
                 }
 
                 return maps;
             }, y);
         }
 
-        std::cout << "Summing up the maps..." << std::endl;
-        for (auto& x : pool.foreach()) {
-            //auto x = y.get();
-#ifndef update_local
-#define update_local(field, currFuture)           (field) += currFuture .  field
-#endif
-            update_local(path_length_size, x);
-            update_local(spearman, x);
-            update_local(precision_leqK, x);
-            update_local(precision_narrow, x);
-            update_local(ncdg, x);
-            update_local(recall_gtK, x);
-            //update_local(smallerNotCandidate, x);
-        }
-        //futures.clear();
+        std::chrono::time_point<std::chrono::system_clock> ende =
+                std::chrono::system_clock::now();
 
-        std::cout << "Spearman, for top-k                                              " << spearman / path_length_size << std::endl;
-        //print_result_maps(path_length_size, spearman);
-        std::cout << "Precision, for top-k scores                                      " << precision_leqK / path_length_size << std::endl;
-        //print_result_maps(path_length_size, precision);
-        ///std::cout << "Precision, for top-k elements                                    " << precision_narrow / path_length_size << std::endl;
-        std::cout << "Recall, for non top-k elements (wrongly matching the candidates) " << recall_gtK / path_length_size << std::endl;
-        //std::cout << "More similar than worst top-1 not candidate, not current element " << smallerNotCandidate / path_length_size << std::endl;
-        //print_result_maps(path_length_size, precision_narrow);
+        //std::cout << "Summing up the maps..." << std::endl;
+        struct result_map mappa;
+        for (auto& x : pool.foreach()) {
+            mappa += x;
+        }
+
+
+        // floating-point duration: no duration_cast needed
+        std::chrono::duration<double, std::milli> fp_ms = ende - now;
+        mappa.milliseconds = fp_ms.count();
+        mappa.spearman /= mappa.path_length_size;
+        mappa.precision_leqK /= mappa.path_length_size;
+        mappa.recall_gtK /= mappa.path_length_size;
+        return mappa;
     }
 
     /*void
@@ -286,6 +209,7 @@ public:
 
 protected:
     virtual void initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &subgraph_as_paths) = 0;
+
     virtual ForComparison getVectorRepresentation(const std::vector<size_t>& current) = 0;
     virtual double similarity(const ForComparison& lhs, const ForComparison& rhs) = 0;
     virtual void  generateTopKCandidates(PollMap<double,std::string>& map, const std::vector<size_t>& current) = 0;

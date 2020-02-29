@@ -33,6 +33,7 @@
 #include <Graph.h>
 #include "TestingTree.h"
 #include "TestingGraphLambda.h"
+#include <chrono>
 
 #define         DEBUG           (false)
 
@@ -99,6 +100,9 @@ public:
         std::vector<std::vector<size_t>> splitNodeCandidatesId = SplitVector<size_t, std::set<size_t>>(passGraph.getCandidates(), threadNo);
 
         // Performing the test for each node in the hierarchy, root excluded
+
+        std::chrono::time_point<std::chrono::system_clock> now =
+                std::chrono::system_clock::now();
         for (const std::vector<size_t>& y: splitNodeCandidatesId) {
             pool.poolExecute([this, splitNodeCandidatesId](const std::vector<size_t> & candidateSublist) {
                 std::function<ForComparison(size_t)> lam = this->getVRLambda();
@@ -115,6 +119,9 @@ public:
                 return maps;
             }, y);
         }
+        std::chrono::time_point<std::chrono::system_clock> ende =
+                std::chrono::system_clock::now();
+        std::chrono::duration<double, std::milli> fp_ms = ende - now;
 
         std::cout << "Summing up the maps..." << std::endl;
         for (auto& x : pool.foreach()) {
@@ -129,6 +136,7 @@ public:
         std::cout << "Spearman, for top-k                                              " << spearman / path_length_size << std::endl;
         std::cout << "Precision, for top-k scores                                      " << precision_leqK / path_length_size << std::endl;
         std::cout << "Recall, for non top-k elements (wrongly matching the candidates) " << recall_gtK / path_length_size << std::endl;
+        std::cout << "Time (milliseconds) " << fp_ms.count() / path_length_size << std::endl;
     }
 
 protected:
@@ -144,14 +152,6 @@ protected:
         return [this](const ForComparison& x,const ForComparison& y) {
             return this->similarity(x,y);
         };
-    }
-
-    void  generateTopKCandidates(PollMap<double, size_t>& map, const size_t& current) {
-        auto allVectors = getVectorRepresentation(current);
-        for (auto & x : this->treeToGraphMorphism) {
-            double  score = this->similarity(allVectors, getVectorRepresentation(x.second));
-            map.add(score, x.second);
-        }
     }
 
     /**

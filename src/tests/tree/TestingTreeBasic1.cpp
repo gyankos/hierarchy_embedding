@@ -9,7 +9,6 @@
 void TestingTreeBasic1::initialize_hierarchy_with_all_paths(const std::vector<std::vector<size_t>> &ls) {
     for (const std::vector<size_t> &x: ls) {
         size_t tmp = tree.addChild(x, id);
-        //std::cout << x <<  "    " << tmp << std::endl ;
         nodes += tmp;
     }
     keyValueMap.insert(std::make_pair("", ConceptVector::relevancy_vector(tree, std::vector<size_t>{})));

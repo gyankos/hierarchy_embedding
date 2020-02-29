@@ -28,7 +28,7 @@ protected:
     }
 
     double similarity(const std::string &lhs, const std::string &rhs) override {
-        double distance = euclideanDistance(memoization_map[lhs], memoization_map[rhs]);
+        double distance = poincarreDistance(memoization_map[lhs], memoization_map[rhs]);
         double normalized = distance / (distance+1);
         return 1.0 - normalized;
     }

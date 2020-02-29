@@ -21,7 +21,7 @@ protected:
     }
 
     double similarity(const std::vector<double> &lhs, const std::vector<double> &rhs) const override {
-        double distance = euclideanDistance(lhs, rhs);
+        double distance = poincarreDistance(lhs, rhs);
         double normalized = distance / (distance+1);
         return 1.0 - normalized;
     }

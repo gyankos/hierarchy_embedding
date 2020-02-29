@@ -26,23 +26,4 @@ protected:
     void finalizeDataIngestion() override {}
 };
 
-/*
- * double test_basic_1(const std::vector<std::vector<size_t>> &ls) {
-    naryTree tree{0};
-    size_t nodes = 0;
-    size_t id = 0;
-    for (const std::vector<size_t> &x: ls) {
-        size_t tmp = tree.addChild(x, id);
-        //std::cout << x <<  "    " << tmp << std::endl ;
-        nodes += tmp;
-    }
-    std::cout << ConceptVector::relevancy_vector(tree, {}) << std::endl;
-    for (const std::vector<size_t> &x: ls) {
-       std::cout << x << "    " <<  ConceptVector::relevancy_vector(tree, x) << std::endl;
-    }
-    return 1.0;
-}
-
- */
-
 #endif //HIERARCHY_TESTS_TESTINGTREEBASIC1_H

@@ -74,21 +74,23 @@ More similar than worst top-1 not candidate, not current element 0.5
     testingBasic4.run(ls);
 }
 
-void basic_testing(size_t maximumBranchingFactor, size_t maximumHeight) {
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " @ Relevance Vector " << std::endl;
+void basic_testing(size_t maximumBranchingFactor, size_t maximumHeight, std::ofstream& file) {
     std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
+    std::cout << maximumBranchingFactor << "," << maximumHeight << std::endl;
+
+    file << maximumBranchingFactor << "," << maximumHeight << ",Relevance Vector,";
     TestingTreeBasic1 testingBasic1{maximumBranchingFactor, maximumHeight};
-    testingBasic1.run(ls);
+    file << testingBasic1.run(ls) << std::endl;
 
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " @ Local Density (beta=0.75) " << std::endl;
+    file << maximumBranchingFactor << "," << maximumHeight << ",Local Density (beta=0.75),";
     TestingTreeBasic2 testingBasic2{maximumBranchingFactor, maximumHeight, 0.75};
-    testingBasic2.run(ls);
+    file <<  testingBasic2.run(ls)<< std::endl;
 
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " @ Multiple Descent (beta=0.75, alpha=0.5) " << std::endl;
+    file << maximumBranchingFactor << "," << maximumHeight << ",Multiple Descent (beta=0.75 alpha=0.5),";
     TestingTreeBasic3 testingBasic3{maximumBranchingFactor, maximumHeight, 0.75, 0.5};
-    testingBasic3.run(ls);
+    file << testingBasic3.run(ls)<< std::endl;
 
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " @ Multiple Descent (beta=1, alpha=0.5) " << std::endl;
+    file << maximumBranchingFactor << "," << maximumHeight << ",Multiple Descent (beta=1 alpha=0.5),";
     TestingTreeBasic3 testingBasic4{maximumBranchingFactor, maximumHeight, 1, 0.5};
-    testingBasic4.run(ls);
+    file << testingBasic4.run(ls)<< std::endl;
 }

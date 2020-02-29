@@ -34,9 +34,11 @@ Now Computing...
  * @param function
  */
 template <class T> void perform_test(size_t maxBranch, size_t maxHeight, T function) {
-    for (size_t i =/* 2*/2; i<=maxBranch; i++) {
+    std::ofstream file{};
+    file.open("final_experiments_poinc.csv", std::ios::out | std::ios::app);
+    for (size_t i =/* 2*/2; i<=maxBranch; i+=2) {
         for (size_t j = /*2*/2; j<=maxHeight; j++) {
-            function(i, j);
+            function(i, j, file);
         }
     }
 }
@@ -72,54 +74,58 @@ void write_poincarre_files(size_t maximumBranchingFactor, size_t maximumHeight) 
     }
 }
 
-void test_proposal(size_t maximumBranchingFactor, size_t maximumHeight) {
-    std::cerr << maximumBranchingFactor << ", " << maximumHeight << std::endl;
+void test_proposal(size_t maximumBranchingFactor, size_t maximumHeight, std::ofstream& file) {
+    std::cout <<maximumBranchingFactor << ',' << maximumHeight << std::endl;
+    file << maximumBranchingFactor << ',' << maximumHeight << ",EuclideanEmbedding,";
     std::vector<std::vector<std::vector<size_t>> > ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
     //size_t maximumBranchingFactor, double distanceFactor, double decayFactor, size_t  maxHeight
     TestingTreeProposal tepee{maximumBranchingFactor, 3, (double)2.0, maximumHeight};
-    tepee.run(ls);
+    file << tepee.run(ls) << std::endl;
 }
 
-void external_testing(size_t maximumBranchingFactor, size_t maximumHeight) {
+void external_testing(size_t maximumBranchingFactor, size_t maximumHeight, std::ofstream& file) {
+    std::cout <<maximumBranchingFactor << ',' << maximumHeight << std::endl;
     std::vector<std::vector<std::vector<size_t>> > ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " Poincarré@7" << std::endl;
+    file << maximumBranchingFactor << "," << maximumHeight << ",Poincarré k=7,";
     {
         TestingTreeExternal p{maximumBranchingFactor, maximumHeight, "/media/giacomo/Data/hierarchy_paper/projects/poincare-embeddings/results/usecase_" + std::to_string(maximumBranchingFactor) + "_" + std::to_string(maximumHeight) + ".csv.7pth.txt"};
-        p.run(ls);
+        file << p.run(ls) << std::endl;
     }
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " Poincarré@50" << std::endl;
+    file << maximumBranchingFactor << "," << maximumHeight << ",Poincarré k=50,";
     {
         TestingTreeExternal p{maximumBranchingFactor, maximumHeight, "/media/giacomo/Data/hierarchy_paper/projects/poincare-embeddings/results/usecase_" + std::to_string(maximumBranchingFactor) + "_" + std::to_string(maximumHeight) + ".csv.50pth.txt"};
-        p.run(ls);
+        file << p.run(ls) << std::endl;
     }
 }
 
-void testing_learning(size_t maximumBranchingFactor, size_t maximumHeight) {
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " EEEL@" << 7 << std::endl;
+void testing_learning(size_t maximumBranchingFactor, size_t maximumHeight, std::ofstream& file) {
+    std::cout <<maximumBranchingFactor << ',' << maximumHeight << std::endl;
     std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
-    TestingTreeLearning testing_dimension_as_branching{maximumBranchingFactor, maximumHeight, 7};
-    testing_dimension_as_branching.run(ls);
 
-    std::cout << maximumBranchingFactor << ", " << maximumHeight << " EEEL@" << 50 << std::endl;
+    file << maximumBranchingFactor << "," << maximumHeight << ",EEEL k=7," ;
+    TestingTreeLearning testing_dimension_as_branching{maximumBranchingFactor, maximumHeight, 7};
+    file << testing_dimension_as_branching.run(ls) << std::endl;
+
+    file << maximumBranchingFactor << "," << maximumHeight << ",EEEL k=50," ;
     TestingTreeLearning testing_dimension_mid_branching_100{maximumBranchingFactor, maximumHeight,
                                                             50};
-    testing_dimension_mid_branching_100.run(ls);
+    file << testing_dimension_mid_branching_100.run(ls)<< std::endl;
 }
 
-void parhier_testing(size_t maximumBranchingFactor, size_t maximumHeight) {
+void parhier_testing(size_t maximumBranchingFactor, size_t maximumHeight, std::ofstream& file) {
     double distanceFactor = 3;
     double decayFactor = 2;
-
-    auto ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
+    std::cout << maximumBranchingFactor << "," << maximumHeight << std::endl;
+              auto ls = generateCompleteSubgraph(maximumBranchingFactor, maximumHeight);
     {
-        std::cout << maximumBranchingFactor << ", " << maximumHeight << " ParHierCluster k=3 @" << std::endl;
+        file << maximumBranchingFactor << "," << maximumHeight << ",ParHier Cluster k=3,";
         TestingTreePar testing{maximumBranchingFactor, maximumHeight, 3, CLUSTER, 3.0, 2.0};
-        testing.run(ls);
+        file <<  testing.run(ls) << std::endl;
     }
     {
-        std::cout << maximumBranchingFactor << ", " << maximumHeight << " ParHierSum k=3 @" << std::endl;
+        file << maximumBranchingFactor << "," << maximumHeight << ",ParHier Sum k=3,";
         TestingTreePar testing{maximumBranchingFactor, maximumHeight, 3, SUM, 3.0, 2.0};
-        testing.run(ls);
+        file <<  testing.run(ls) << std::endl;
     }
 }
 
@@ -131,21 +137,17 @@ void parhier_testing(size_t maximumBranchingFactor, size_t maximumHeight) {
 #include <tests/graph/TestingGraphBasic1.h>
 #include <tests/graph/TestingGraphBasic2.h>
 #include <tests/graph/TestingGraphBasic3.h>
+#include <tests/graph/TestingGraphExternal.h>
 //#include <tests/graph/TestingGraphBasic1.h>
 #include "Graph.h"
 #include "tests/graph/TestingGraphProposal.h"
 
-void run_proposed_graph_tests() {
+void mammals_graph_tests() {
     /// XXX: important: cannot test with Basic metric, because it takes more than 64GB of primary memory to represent that: too computational inefficient to represent
 
     Graph g{"mammals.txt"};
     double distanceFactor = 3;
     double decayFactor = 2;
-    {
-        std::cout << "Proposed" << std::endl;
-        TestingGraphProposal proposal(distanceFactor, decayFactor, g);
-        proposal.run(true);
-    }
     {
         std::cout << "Relevance" << std::endl;
         TestingGraphBasic1 proposal(g);
@@ -166,29 +168,41 @@ void run_proposed_graph_tests() {
         TestingGraphBasic3 proposal(g, 0.75, 1.0);
         proposal.run(true);
     }
+    {
+        std::cout << "External 50" << std::endl;
+        TestingGraphExternal proposal(g, "/media/giacomo/Data/hierarchy_paper/projects/poincare-embeddings/output/mammals.pth.184.txt");
+        proposal.run(true);
+    }
+    {
+        std::cout << "Proposed" << std::endl;
+        TestingGraphProposal proposal(distanceFactor, decayFactor, g);
+        proposal.run(true);
+    }
 }
 
-void perform_testing() {
-    /// -> Performing the tests that are required for the tree part of the paper
-    perform_test(7, 5, testing_learning);
+void complete_tree_benchmarking() {
+    std::cout << "Proposal" << std::endl;
+    perform_test(7, 5, test_proposal);
+    /*std::cout << "Poincarré" << std::endl;
+    perform_test(7, 5, external_testing);
+    std::cout << "Basic" << std::endl;
+    perform_test(7, 5, basic_testing);
+    std::cout << "ParHier" << std::endl;
+    perform_test(7, 5, parhier_testing);
+    std::cout << "Learning" << std::endl;
+    perform_test(7, 5, testing_learning);*/
 }
 
 /**
  *
  * TODO: 1) Continue to change the Learning part to support the graph: It should be nearly done, just create the learning part.
- *       2) Change the graph part, so that it is also possible to elect one single node as a root.
- *       3) Continue, and change also the proposal code accordingly.
- *       4) If possible, adapt the same optimizations that you performed over the graphs for the tree, too, so to slighly reduce the computation complexity.
  *
  * @return
  */
 
 int main() {
-
-
-
-    run_proposed_graph_tests();
-
+    ///complete_tree_benchmarking();
+    mammals_graph_tests();
 
     /*std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(7, 5);
     TestingProposal testing_dimension_as_branching{7, 3, 2, 5};

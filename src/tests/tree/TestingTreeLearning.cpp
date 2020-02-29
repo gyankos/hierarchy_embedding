@@ -80,7 +80,6 @@ void TestingTreeLearning::generateTopKCandidates(PollMap<double, std::string> &m
 }
 
 void testing_batch_learning_method() {
-
     size_t maximumBranchingFactor = 4;
     size_t maximumHeight = 3;
 

@@ -2,7 +2,7 @@
 // Created by giacomo on 16/02/20.
 //
 
-#include "TestingGraphExternal.h"
+#include "tests/graph/TestingGraphExternal.h"
 
 TestingGraphExternal::TestingGraphExternal(Graph &ref,const std::string &filename) : TestingGraph(ref) {
     std::ifstream infile(filename);

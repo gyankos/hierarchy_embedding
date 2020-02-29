@@ -21,4 +21,16 @@ bool subArrayOf(std::vector<size_t>& array, std::vector<size_t>& subarray);
      */
 double euclideanDistance(const std::vector<double> &left, const std::vector<double> &right);
 
+#include <numeric>
+#include <vector>
+#include <cmath>
+#include <iostream>
+
+template<typename Iter_T>
+long double vectorNorm2(Iter_T first, Iter_T last) {
+    return inner_product(first, last, first, 0.0L);
+}
+
+double poincarreDistance(const std::vector<double> &left, const std::vector<double> &right);
+
 #endif //HIERARCHY_TESTS_PROPOSAL_UTILS_H

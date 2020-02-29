@@ -23,6 +23,13 @@ struct TestingGraphLambda {
     PollMap<double, size_t> pollMap;
     ForComparison vcurrent;
 
+    /**
+     *
+     * @param current                           Leaf element from which we're going to assess the distance
+     * @param currentRankMap                    Reference to the expected rank map
+     * @param getVectorRepresentation           Lambda function returning the memoized representation of the data structure
+     * @param similarity                        Lambda function for the similarity scorer
+     */
     TestingGraphLambda(const size_t& current, std::map<size_t, size_t>& currentRankMap, std::function<ForComparison(size_t)>& getVectorRepresentation,
                        std::function<double(const ForComparison&,const ForComparison&)>& similarity) :
             current{current}, currentRankMap{currentRankMap}, getVectorRepresentation{getVectorRepresentation}, similarity{similarity} {
@@ -30,23 +37,26 @@ struct TestingGraphLambda {
     }
 
     size_t map_size = 0;
-    size_t              noCandidates;
 
-
-
-    void operator()(size_t first, size_t second) {
-        ///std::cout << "(1) " << first << "," << second << std::endl;
+    /**
+     * Callback function that is called to evaluate the distance among all the elements within the data structure.
+     * pollMap will contain all the score sorted, and then the
+     *
+     * @param first
+     * @param unused_to_remove
+     */
+    void operator()(size_t first, size_t unused_to_remove) {
         auto vfirst = getVectorRepresentation(first);
-        double score = similarity(vcurrent,vfirst);
-        //if (score == 0) return; // Zero score means that the current element is not a candidate
-
-        // Spearman
-        //expectedMeanPollRank += second;
-
+        double score = similarity(vcurrent, vfirst);
         pollMap.add(score, first);
         map_size++;
     }
 
+    /**
+     *
+     * @param maps          Map where to write the final result for the current thread
+     * @param maxLength     Maximum length of the elements out of the boundaries of the K-th path
+     */
     void finalize(struct result_map& maps, int maxLength) {
         maxLength = std::max(maxLength, 0);
 
@@ -75,13 +85,13 @@ struct TestingGraphLambda {
         double precisionNumber = 0, recallNumber = 0;
 
         double overK = 0;
-        while (it != castor_et_pollux.rend()) {
+        while (it != castor_et_pollux.rend()) { // Iterating over the current implementation's ranked elements from the smaller to the largest
             size_t N = it->second.size();
 
             overallX += N;
             for (const auto& x : it->second) {
                 auto it2 = currentRankMap.find(x);
-                if (inferredPollCurrentPos > kSplit) {
+                if (inferredPollCurrentPos > kSplit) { // If I am already past the K elements, then I can only intercept the real positive values with a recall measure
                     recallNumber++;
                     if (it2 != currentRankMap.end()) {
                         if(candidates_recall.insert(x).second)
@@ -89,16 +99,16 @@ struct TestingGraphLambda {
                     }
                 } else {
                     precisionNumber++;
-                    if (it2 != currentRankMap.end()) {
+                    if (it2 != currentRankMap.end()) { // If I am below the K elements, I suppose that I can use this information to reconstruct the path
                         if(candidates.insert(x).second)
                             retrieved_for_precision+=1.0;
                     }
                 }
 
-                double expectedPollCurrentPos = (it2 != currentRankMap.end()) ? ((double)it2->second)/*-expectedMeanPollRank*/ : (((double)maxLength) /*- expectedMeanPollRank*/);
+                // Determining the rank that is provided in the data structure: if it was not there, then it means that it is not a valid candidate, and hence it will be mapped in the last ranked position
+                double expectedPollCurrentPos = (it2 != currentRankMap.end()) ? ((double)it2->second) : (((double)maxLength));
                 calculateY.emplace_back(expectedPollCurrentPos);
                 calculateX.emplace_back(inferredPollCurrentPos);
-
                 sumY += expectedPollCurrentPos;
                 sumX += inferredPollCurrentPos;
             }
@@ -106,10 +116,11 @@ struct TestingGraphLambda {
             it++;
         }
 
+        // Calculating precision and recall
         maps.precision_leqK += ((double)retrieved_for_precision) / (precisionNumber);
         maps.recall_gtK    += (recallNumber == 0.0) ? 0.0 : ((double)recallToBeZero) / (recallNumber);
 
-        // Spearman
+        // Last, calculating correlation coefficient
         double numeratore = 0.0;
         double                 calculateXSquaredSummed = 0.0;
         double                 calculateYSquaredSummed = 0.0;
