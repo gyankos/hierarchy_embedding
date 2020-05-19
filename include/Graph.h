@@ -109,15 +109,9 @@ class Graph {
         return it != transitive_closure_map.end() ? it->second : std::numeric_limits<size_t>::max();
     }
 
-
-
     size_t addNewNode(size_t id);
     void addNewEdge(size_t src, size_t dst, int weight);
     Graph();
-
-    void nested_loop_join(const std::vector<size_t>& embedding_id, std::vector<size_t> vector_pos, std::vector<Graph>& graph_collections);
-
-    std::vector<size_t> generateNode(size_t v) const;
 
     void sub_generation_method(std::unordered_map<size_t, size_t>& treeToGraphMorphism,
                                std::unordered_map<size_t, std::unordered_set<size_t>>& tree,
@@ -126,6 +120,17 @@ class Graph {
                                size_t& vecAverage,
                                std::map<size_t,size_t>& mostFrequent,
                                lemon::SmartDigraph::Node& node);
+
+    /**
+     * Under the assumtion that the current graph has a label <a,b> where a is a unique label from the first graph
+     * and b is an unique label from the second graph, returns the id associated to the both graph ids
+     *
+     * @param g1        First graph creating the lattice
+     * @param g2        Second graph creating the lattice
+     * @param uid       Id of the current graph
+     * @return          Pair of node ids, reconstructing the node from the label
+     */
+    std::pair<unsigned long, unsigned long> getPair(Graph &g1, Graph &g2, size_t uid) const;
 
 public:
 
@@ -138,22 +143,33 @@ public:
     size_t height;
     void johnsonAlgorithm(bool storeFile = true);
 
+    /**
+     * Testing the assumptions that we can
+     *
+     * @param g1
+     * @param g2
+     */
     void test_lattice2(Graph &g1, Graph &g2);
 
+    /**
+     * Move constructor: this is more like a copy constructor (as lemon does not support moves)
+     *
+     * @param x
+     */
     Graph(Graph&& x);
-    std::string getName(size_t id) const {
-        return fileElementNameToId.getKey(id);
-    }
-    size_t getId(const std::string& name) {
-        return fileElementNameToId.getValue(name);
-    }
-    Graph(const std::string &filename);
 
     /**
-     * Creates a lattice from the given dimensions by performing the lexicographical product over the graph
-     * @param graph_collections     All dimensions
+     * Loading the graph from a file
+     *
+     * childid  parentid   edgeWeight
+     *
+     * @param filename
      */
-    Graph(std::vector<Graph>& graph_collections);
+    Graph(const std::string &filename);
+
+
+    std::string getName(size_t id) const;
+    size_t getId(const std::string& name);
 
 
     /**
@@ -222,8 +238,7 @@ public:
 
     std::vector<size_t> getChildren(size_t i);
 
-    std::pair<unsigned long, unsigned long> getPair(Graph &g1, Graph &g2, size_t uid) const;
-};
+    };
 
 
 #endif //HIERARCHY_TESTS_GRAPH_H

@@ -292,83 +292,6 @@ std::vector<size_t> Graph::getChildren(size_t i) {
     return toRet;
 }
 
-Graph::Graph(std::vector<Graph> &graph_collections) : Graph{} {
-
-    // Declaring the embedding for representing the lattice with a single number
-    embedding_id.emplace_back(1);
-    size_t embedding_id_current = 1;
-    for (size_t i = 1, n = graph_collections.size(); i<n; i++) {
-        embedding_id_current *= graph_collections[i-1].nodeSize();
-        embedding_id.emplace_back(embedding_id_current);
-    }
-
-    // Now, generating the cartesian product over the vertices
-    nested_loop_join(embedding_id, {}, graph_collections);
-
-    //graph_collections[0].print_graph();
-    //graph_collections[1].print_graph();
-    //return;
-
-    // Now, generating all the edges among the nodes via cartesian product
-    for (const auto& cp1: nodeMap) {
-        auto u = cp1.first;
-        auto u_vector = generateNode(u); // Generating the original dimensions' nodes from the id
-
-        for (const auto& cp2: nodeMap) {
-            auto v = cp2.first;
-            if (u == v) continue; // Avoiding creating a hook over a node
-
-            auto v_vector = generateNode(v); // Generating the original dimensions' nodes form the id
-            bool doSkip = false;
-
-            // Checking if there is at most one node change
-            int candidate_pos = -1;
-            for (int i = 0, n = u_vector.size(); i<n; i++) {
-                if (u_vector[i] != v_vector[i]) {
-                    if (candidate_pos != -1) {
-                        doSkip = true;
-                        break;
-                    } else {
-                        candidate_pos = i;
-                    }
-                }
-            }
-
-            // Skipping if there is more than just one component that changes
-            if (doSkip) continue;
-
-            // Retrieving the graph over which we need to find the edge
-            Graph& g = graph_collections[candidate_pos];
-
-            // Getting if the two elements are connected in the original graph: only in this case, I'm going to create the edge in the lattice
-            if (size_t cost = g.hasEdge(u_vector[candidate_pos], v_vector[candidate_pos])) {
-                //addNewEdge(u, v,  1);
-                /*std::cout << "for graph #" << candidate_pos << ", ";
-                std::cout << getName(u) << "-->" <<
-                          getName(v) << " ## " <<  u_vector[candidate_pos] << "~>" << v_vector[candidate_pos]<< std::endl;
-*/
-
-                //addNewEdge( u, v,  cost);
-                //graph_collections[candidate_pos].print_graph();
-                //return ;
-                /*std::cout << "for graph #" << candidate_pos << " ";
-                std::cout << "{";
-                for (size_t i = 0, n = u_vector.size(); i<n; i++) {
-                    std::cout << graph_collections[i].getName(u_vector[i]);
-                    if (i != (n-1)) std::cout << ", ";
-                }
-                std::cout << "}  {";
-                for (size_t i = 0, n = v_vector.size(); i<n; i++) {
-                    std::cout << graph_collections[i].getName(v_vector[i]);
-                    if (i != (n-1)) std::cout << ", ";
-                }
-                std::cout << "}" << std::endl;*/
-            }
-        }
-    }
-
-}
-
 void Graph::print_graph() {
     auto it = g.arcs();
     auto itx = it.begin(), itf = it.end();
@@ -387,51 +310,6 @@ size_t Graph::hasEdge(size_t src, size_t dst) const {
             lemon::findArc(g, lemon::SmartDigraph::nodeFromId(src), lemon::SmartDigraph::nodeFromId(dst));
 
     return hasArc != lemon::INVALID ? costMap[hasArc] : 0;
-}
-
-void Graph::nested_loop_join(const std::vector<size_t> &embedding_id, std::vector<size_t> vector_pos,
-                             std::vector<Graph> &graph_collections) {
-    size_t vps = vector_pos.size();
-    if (vps == graph_collections.size()-1) {
-        Graph& g = graph_collections.back();
-        for (const auto& cp : g.nodeMap) {
-            std::vector<size_t> copy{vector_pos};
-            copy.emplace_back(cp.first);
-            size_t computed_id = 0;
-            std::string key = "<";
-            for (size_t i = 0, n = embedding_id.size(); i<n; i++) {
-                computed_id += embedding_id[i] * copy[i];
-                key += graph_collections[i].getName(copy[i]);
-                if (i != n-1)
-                    key += ',';
-            }
-            key += ">";
-            addNewNode(computed_id);
-            fileElementNameToId.put(key, computed_id);
-            /*std::cerr <<
-                      std::string(vps, '.') << cp.first << "<->" << g.fileElementNameToId.getKey(cp.first) << std::endl;
-            std::cerr << std::string(vps+2, ' ') << key << "<->" << computed_id << "=" << copy << '=' << generateNode(embedding_id, computed_id) << std::endl;
-        */}
-    } else {
-        Graph& g = graph_collections[vector_pos.size()];
-        for (const auto& cp : g.nodeMap) {
-            std::vector<size_t> copy{vector_pos};
-            copy.emplace_back(cp.first);
-            /*std::cerr <<
-                      std::string(vps, '.') << cp.first << "<->" << g.fileElementNameToId.getKey(cp.first) << std::endl;*/
-            nested_loop_join(embedding_id, copy, graph_collections);
-        }
-    }
-}
-
-std::vector<size_t> Graph::generateNode(size_t v) const {
-    std::vector<size_t> elements{embedding_id.size(), 0};
-    for (size_t i = 0, n = embedding_id.size(); i<n; i++) {
-        size_t operand = embedding_id[n-i-1];
-        elements[n-i-1] = (size_t)v / operand;
-        v = v % operand; /* Likely uses the result of the division. */
-    }
-    return elements;
 }
 
 Graph::Graph(Graph &&x) : Graph{} {
@@ -497,7 +375,7 @@ std::pair<unsigned long, unsigned long> Graph::getPair(Graph &g1, Graph &g2, siz
     std::string uid_s = getName(uid);
     uid_s = uid_s.substr(1, uid_s.length()-2);
     unsigned long it = uid_s.find_first_of(',');
-    std::cout << uid_s << "  " << uid_s.substr(0, it) << "  " << uid_s.substr(it+1) << std::endl;
+    ///std::cout << uid_s << "  " << uid_s.substr(0, it) << "  " << uid_s.substr(it+1) << std::endl;
     auto u = std::make_pair(g1.getId(uid_s.substr(0, it)), g2.getId(uid_s.substr(it+1)));
     return u;
 }
@@ -568,5 +446,13 @@ void Graph::sub_generation_method(std::unordered_map<size_t, size_t> &treeToGrap
     }
     if (isLeaf)
         internalLeafCandidates.insert(nId);
+}
+
+std::string Graph::getName(size_t id) const {
+    return fileElementNameToId.getKey(id);
+}
+
+size_t Graph::getId(const std::string &name) {
+    return fileElementNameToId.getValue(name);
 }
 
