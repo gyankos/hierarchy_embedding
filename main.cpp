@@ -218,10 +218,10 @@ void test_lattice() {
 }
 
 int main() {
-    test_lattice();
+    //test_lattice();
 
-    ///complete_tree_benchmarking();
-    ///mammals_graph_tests();
+    complete_tree_benchmarking();
+    mammals_graph_tests();
 
     /*std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(7, 5);
     TestingProposal testing_dimension_as_branching{7, 3, 2, 5};
