@@ -80,10 +80,11 @@ namespace std {
 }
 
 class Graph {
+    std::vector<size_t> embedding_id;
     size_t rootId;
     lemon::SmartDigraph g;
     std::string filename;
-    std::unordered_map<size_t, size_t> nodeMap;
+    std::unordered_map<size_t, size_t> nodeMap; // maps a node id to a lemon graph id
     std::unordered_map<size_t, size_t> invMap;
     std::unordered_map<std::pair<size_t,size_t>, size_t> transitive_closure_map;
     lemon::SmartDigraph::ArcMap<int> costMap;
@@ -93,6 +94,10 @@ class Graph {
     //lemon::Dfs<lemon::SmartDigraph> dfs;
     //lemon::Dijkstra<lemon::SmartDigraph> dij;
     std::set<size_t> internalLeafCandidates;
+    // Getting which is the maximal branching factor of the graph: this is required for the basic metric and for
+    // determining the vectorial size
+    size_t isTree = std::numeric_limits<size_t>::min();
+    fixed_bimap<std::string, size_t> fileElementNameToId;
 
     inline size_t fw_cost(size_t src, size_t dst) {
         return (src == dst) ? 0 : fw_cost(std::make_pair(src,dst));
@@ -104,26 +109,41 @@ class Graph {
         return it != transitive_closure_map.end() ? it->second : std::numeric_limits<size_t>::max();
     }
 
-    void johnsonAlgorithm();
 
-    // Getting which is the maximal branching factor of the graph: this is required for the basic metric and for
-    // determining the vectorial size
-    size_t isTree = std::numeric_limits<size_t>::min();
-
-    fixed_bimap<std::string, size_t> fileElementNameToId;
 
     size_t addNewNode(size_t id);
     void addNewEdge(size_t src, size_t dst, int weight);
+    bool hasEdge(size_t src, size_t dst) const;
     Graph();
 
+    void nested_loop_join(const std::vector<size_t>& embedding_id, std::vector<size_t> vector_pos, std::vector<Graph>& graph_collections);
+
+    std::vector<size_t> generateNode(size_t v) const;
+
 public:
-    std::string getName(size_t id) {
+
+    // Getting which is the maximal branching factor of the graph: this is required for the basic metric
+    // determining the vectorial size
+    size_t maxBranch = std::numeric_limits<size_t>::min();
+    size_t height;
+    void johnsonAlgorithm(bool storeFile = true);
+
+    void test_lattice2(Graph &g1, Graph &g2);
+
+    Graph(Graph&& x);
+    std::string getName(size_t id) const {
         return fileElementNameToId.getKey(id);
     }
     size_t getId(const std::string& name) {
         return fileElementNameToId.getValue(name);
     }
     Graph(const std::string &filename);
+
+    /**
+     * Creates a lattice from the given dimensions by performing the lexicographical product over the graph
+     * @param graph_collections     All dimensions
+     */
+    Graph(std::vector<Graph>& graph_collections);
 
 
     /**
@@ -139,6 +159,8 @@ public:
     size_t generateNaryTree(std::unordered_map<size_t, size_t>& treeToGraphMorphism, std::unordered_map<size_t, std::unordered_set<size_t>>& tree, std::map<size_t, std::string>& treeIdToPathString,
                             std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv, char* rootNameNode = nullptr);
     const std::set<size_t>& getCandidates();
+
+    size_t getCost(size_t src, size_t dst, bool isNotLemonId = false);
 
     template <typename F> size_t isTherePath(size_t dst, std::map<size_t, size_t> &dstCandidates,  F &callback, int& maxLength) {
         // Converting the outer ids to the internal ones
@@ -176,13 +198,14 @@ public:
 
     }
 
-   // Getting which is the maximal branching factor of the graph: this is required for the basic metric
-   // determining the vectorial size
-    size_t maxBranch = std::numeric_limits<size_t>::min();
-    size_t height;
 
     size_t getRootId();
-    int nodeSize();
+    int nodeSize() const;
+
+    /**
+     * Prints the graph to the standard output
+     */
+    void print_graph();
 
     std::vector<size_t> getChildren(size_t i);
 };

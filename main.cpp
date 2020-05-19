@@ -183,26 +183,45 @@ void mammals_graph_tests() {
 void complete_tree_benchmarking() {
     std::cout << "Proposal" << std::endl;
     perform_test(7, 5, test_proposal);
-    /*std::cout << "Poincarré" << std::endl;
+    std::cout << "Poincarré" << std::endl;
     perform_test(7, 5, external_testing);
     std::cout << "Basic" << std::endl;
     perform_test(7, 5, basic_testing);
     std::cout << "ParHier" << std::endl;
     perform_test(7, 5, parhier_testing);
     std::cout << "Learning" << std::endl;
-    perform_test(7, 5, testing_learning);*/
+    perform_test(7, 5, testing_learning);
 }
 
 /**
- *
- * TODO: 1) Continue to change the Learning part to support the graph: It should be nearly done, just create the learning part.
- *
- * @return
+ * Next step, on testing lattices
  */
+void test_lattice() {
+    std::vector<Graph> graph_vector;
+    //graph_vector.reserve(2); // TODO: quando avviene il move del grafo, succede un errore di copia che erra la creazione degli archi
+    std::cout << " --- Graph 1 --- " << std::endl;
+    graph_vector.emplace_back("hierarchy1.txt");
+    std::cout << " --- Graph 2 --- " << std::endl;
+    graph_vector.emplace_back("hierarchy2.txt");
+
+    //graph_vector[0].print_graph();
+    //return 0;
+    std::cout << " --- Graph Lattice --- " << std::endl;
+    Graph lattice{graph_vector};
+    //lattice.print_graph();
+
+    graph_vector[0].johnsonAlgorithm(false);
+    graph_vector[1].johnsonAlgorithm(false);
+    lattice.johnsonAlgorithm(false);
+
+    lattice.test_lattice2(graph_vector[0], graph_vector[1]);
+}
 
 int main() {
+    test_lattice();
+
     ///complete_tree_benchmarking();
-    mammals_graph_tests();
+    ///mammals_graph_tests();
 
     /*std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(7, 5);
     TestingProposal testing_dimension_as_branching{7, 3, 2, 5};

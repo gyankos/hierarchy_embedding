@@ -89,8 +89,6 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
 
     for (auto it = nodes.rbegin(); it != nodes.rend(); it++) {
         size_t nId = g.id(*it);
-        if (nId == 21)
-            std::cerr << "DEBUG" << std::endl;
 
         // Checking whether the current element has multiple parents in the dag: if that's the case, then the current
         // node shall be decomposed in as many vectors as many possible parents, thus making as many vectors as many
@@ -101,6 +99,12 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
             assert(it != morphismInv.end());
             isMax+=it->second.size();
             if (isMax > 1) break;
+        }
+
+        if (isMax > 1) {
+            std::cout <<
+                      fileElementNameToId
+                      .getKey(nId) << std::endl;
         }
 
         for (const auto& parent : g.inArcs(*it)) {
@@ -197,15 +201,15 @@ Graph::Graph(const std::string &filename) : Graph{} {
         }
         addNewEdge(parentId, childId, score);
         /*if (childId == 22708 || parentId == 22708)*/
-            std::cout << child << "(" << childId <<  ")  --[" << score << "]--> " << parent << "(" << parentId << ")" <<  std::endl;
+            //std::cout << child << "(" << childId << "~" << nodeMap[childId] <<  ")  --[" << score << "]--> " << parent << "(" << parentId << "~" << nodeMap[parentId] <<  ")" <<  std::endl;
     }
 }
 
-void Graph::johnsonAlgorithm() {
+void Graph::johnsonAlgorithm(bool storeFile) {
     size_t count = 0;
     std::string johnson = filename+"_out.csv";
 
-    if (exists(johnson)) {
+    if (storeFile && exists(johnson)) {
         ///std::cout << "Loading the precomputed outcome of the johnson Algorithm" << std::endl;
         std::ifstream file{johnson};
         size_t src,dst,w;
@@ -234,8 +238,9 @@ void Graph::johnsonAlgorithm() {
 
                 for (auto& v : g.nodes()) { // Setting up the distance map
                     if (dij.reached(v) && (v != u)) {
+                        //std::cout << getName(invMap[g.id(u)]) << "-[" << d[v] << "]->" << getName(invMap[g.id(v)]) << std::endl;
                         transitive_closure_map[std::make_pair(g.id(u), g.id(v))] = d[v];
-                        file << g.id(u) << " " << g.id(v) << " " << d[v] << std::endl;
+                        if (storeFile) file << g.id(u) << " " << g.id(v) << " " << d[v] << std::endl;
                     }
                 }
         }
@@ -248,7 +253,7 @@ size_t Graph::getRootId() {
     return rootId;
 }
 
-int Graph::nodeSize() {
+int Graph::nodeSize() const {
     return nodeMap.size();
 }
 
@@ -261,5 +266,208 @@ std::vector<size_t> Graph::getChildren(size_t i) {
         itx++;
     }
     return toRet;
+}
+
+Graph::Graph(std::vector<Graph> &graph_collections) : Graph{} {
+
+    // Declaring the embedding for representing the lattice with a single number
+    embedding_id.emplace_back(1);
+    size_t embedding_id_current = 1;
+    for (size_t i = 1, n = graph_collections.size(); i<n; i++) {
+        embedding_id_current *= graph_collections[i-1].nodeSize();
+        embedding_id.emplace_back(embedding_id_current);
+    }
+
+    // Now, generating the cartesian product over the vertices
+    nested_loop_join(embedding_id, {}, graph_collections);
+
+    //graph_collections[0].print_graph();
+    //graph_collections[1].print_graph();
+    //return;
+
+    // Now, generating all the edges among the nodes via cartesian product
+    for (const auto& cp1: nodeMap) {
+        auto u = cp1.first;
+        auto u_vector = generateNode(u); // Generating the original dimensions' nodes from the id
+
+        for (const auto& cp2: nodeMap) {
+            auto v = cp2.first;
+            if (u == v) continue; // Avoiding creating a hook over a node
+
+            auto v_vector = generateNode(v); // Generating the original dimensions' nodes form the id
+            bool doSkip = false;
+
+            // Checking if there is at most one node change
+            int candidate_pos = -1;
+            for (int i = 0, n = u_vector.size(); i<n; i++) {
+                if (u_vector[i] != v_vector[i]) {
+                    if (candidate_pos != -1) {
+                        doSkip = true;
+                        break;
+                    } else {
+                        candidate_pos = i;
+                    }
+                }
+            }
+
+            // Skipping if there is more than just one component that changes
+            if (doSkip) continue;
+
+            // Retrieving the graph over which we need to find the edge
+            Graph& g = graph_collections[candidate_pos];
+
+            // Getting if the two elements are connected in the original graph: only in this case, I'm going to create the edge in the lattice
+            if (g.hasEdge(u_vector[candidate_pos], v_vector[candidate_pos])) {
+                //addNewEdge(u, v,  1);
+//                std::cout << "for graph #" << candidate_pos << ", ";
+//                std::cout << getName(u) << "-->" <<
+//                          getName(v) << " ## " <<  u_vector[candidate_pos] << "~>" << v_vector[candidate_pos]<< std::endl;
+
+                addNewEdge( u,v,  1);
+                //graph_collections[candidate_pos].print_graph();
+                //return ;
+                /*std::cout << "for graph #" << candidate_pos << " ";
+                std::cout << "{";
+                for (size_t i = 0, n = u_vector.size(); i<n; i++) {
+                    std::cout << graph_collections[i].getName(u_vector[i]);
+                    if (i != (n-1)) std::cout << ", ";
+                }
+                std::cout << "}  {";
+                for (size_t i = 0, n = v_vector.size(); i<n; i++) {
+                    std::cout << graph_collections[i].getName(v_vector[i]);
+                    if (i != (n-1)) std::cout << ", ";
+                }
+                std::cout << "}" << std::endl;*/
+            }
+        }
+    }
+
+}
+
+void Graph::print_graph() {
+    auto it = g.arcs();
+    auto itx = it.begin(), itf = it.end();
+    while (itx != itf) {
+        std::cout <<
+                  fileElementNameToId.getKey(
+                          invMap.at(lemon::SmartDigraph::id(g.source(itx)))) << "-->"
+                  <<            fileElementNameToId.getKey(
+                          invMap.at(lemon::SmartDigraph::id(g.target(itx)))) << std::endl;
+        itx++;
+    }
+}
+
+bool Graph::hasEdge(size_t src, size_t dst) const {
+    return
+            lemon::findArc(g, lemon::SmartDigraph::nodeFromId(src), lemon::SmartDigraph::nodeFromId(dst)) != lemon::INVALID;
+}
+
+void Graph::nested_loop_join(const std::vector<size_t> &embedding_id, std::vector<size_t> vector_pos,
+                             std::vector<Graph> &graph_collections) {
+    size_t vps = vector_pos.size();
+    if (vps == graph_collections.size()-1) {
+        Graph& g = graph_collections.back();
+        for (const auto& cp : g.nodeMap) {
+            std::vector<size_t> copy{vector_pos};
+            copy.emplace_back(cp.first);
+            size_t computed_id = 0;
+            std::string key = "<";
+            for (size_t i = 0, n = embedding_id.size(); i<n; i++) {
+                computed_id += embedding_id[i] * copy[i];
+                key += graph_collections[i].getName(copy[i]);
+                if (i != n-1)
+                    key += ',';
+            }
+            key += ">";
+            addNewNode(computed_id);
+            fileElementNameToId.put(key, computed_id);
+            /*std::cerr <<
+                      std::string(vps, '.') << cp.first << "<->" << g.fileElementNameToId.getKey(cp.first) << std::endl;
+            std::cerr << std::string(vps+2, ' ') << key << "<->" << computed_id << "=" << copy << '=' << generateNode(embedding_id, computed_id) << std::endl;
+        */}
+    } else {
+        Graph& g = graph_collections[vector_pos.size()];
+        for (const auto& cp : g.nodeMap) {
+            std::vector<size_t> copy{vector_pos};
+            copy.emplace_back(cp.first);
+            /*std::cerr <<
+                      std::string(vps, '.') << cp.first << "<->" << g.fileElementNameToId.getKey(cp.first) << std::endl;*/
+            nested_loop_join(embedding_id, copy, graph_collections);
+        }
+    }
+}
+
+std::vector<size_t> Graph::generateNode(size_t v) const {
+    std::vector<size_t> elements{embedding_id.size(), 0};
+    for (size_t i = 0, n = embedding_id.size(); i<n; i++) {
+        size_t operand = embedding_id[n-i-1];
+        elements[n-i-1] = (size_t)v / operand;
+        v = v % operand; /* Likely uses the result of the division. */
+    }
+    return elements;
+}
+
+Graph::Graph(Graph &&x) : Graph{} {
+    //std::cout << "copying...." << std::endl;
+    //x.print_graph();
+    //std::cout << "-----------" << std::endl;
+    rootId = x.rootId;
+    filename = x.filename;
+    ///nodeMap = x.nodeMap;
+    ///invMap = x.invMap;
+    ///transitive_closure_map = x.transitive_closure_map;
+    ///maxCurrentNode = x.maxCurrentNode;
+    ///maxLength = x.maxLength;
+    ///internalLeafCandidates = x.internalLeafCandidates;
+    maxBranch = x.maxBranch;
+    height = x.height;
+    isTree = x.isTree;
+    ///fileElementNameToId = x.fileElementNameToId;
+    {
+        std::vector<size_t> nodes;
+        for (const auto& cp: x.nodeMap) {
+            nodes.emplace_back(cp.first);
+        }
+        std::sort(nodes.begin(), nodes.end());
+        for (size_t g_id : nodes) {
+            addNewNode(g_id);
+            fileElementNameToId.put(x.fileElementNameToId.getKey(g_id), g_id);
+        }
+    }
+
+    {
+        auto ite = x.g.arcs();
+        auto iteb = ite.begin(), itee = ite.end();
+        while (iteb != itee) {
+            addNewEdge(
+                    x.invMap[lemon::SmartDigraph::id(x.g.source(iteb))],
+                    x.invMap[lemon::SmartDigraph::id(x.g.target(iteb))],
+                    x.costMap[iteb]);
+            iteb++;
+        }
+    }
+
+    //lemon::DigraphCopy(x.g, g).run();
+   // print_graph();
+   // return ;
+
+}
+
+void Graph::test_lattice2(Graph &g1, Graph &g2) {
+    for (const auto& cp_cost : transitive_closure_map) {
+        size_t uid = cp_cost.first.first;
+        size_t vid = cp_cost.first.second;
+
+        auto u = generateNode(invMap.at(uid));
+        auto v = generateNode(invMap.at(vid));
+
+        assert(cp_cost.second == g1.getCost(u[0], v[0], true) + g2.getCost(u[1], v[1], true));
+    }
+}
+
+size_t Graph::getCost(size_t src, size_t dst, bool isNotLemonId) {
+    if (src == dst) return 0;
+    auto it = transitive_closure_map.find(std::make_pair(isNotLemonId ? nodeMap.at(src) : src, isNotLemonId ? nodeMap.at(dst) : dst));
+    return it == transitive_closure_map.end() ? 0 : it->second;
 }
 
