@@ -43,8 +43,8 @@ void Graph::addNewEdge(size_t src, size_t dst, int weight) {
 size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMorphism,
                                std::unordered_map<size_t, std::unordered_set<size_t>> &tree,
                                std::map<size_t, std::string> &treeIdToPathString,
-
-                               std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv, char* rootNameNode) {
+                               std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv,
+                               char* rootNameNode, bool doReverse) {
     //std::unordered_map<size_t, std::unordered_set<size_t>> morphismInv;
 
     // Ensuring that the loaded dataset is indeed a DAG
@@ -76,6 +76,7 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
         rootId = getId(rootNameNode);
        /// std::cout << "Setting " << rootName << " with id " << rootId << "as the root" << std::endl;
     }
+    ///std::cerr << getName(invMap[rootId]) << " as " << invMap[rootId] << "-->" << rootId << std::endl;
     treeToGraphMorphism[rootId] = invMap[rootId];
     morphismInv[invMap[rootId]].insert(rootId);
 
@@ -87,14 +88,34 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
     size_t vecAverage = 0;
     std::map<size_t,size_t> mostFrequent;
 
+    if (doReverse) {
+        for (auto it = nodes.rbegin(); it != nodes.rend(); it++) {
+            lemon::SmartDigraphBase::Node &node = *it;
+            sub_generation_method(treeToGraphMorphism, tree, morphismInv, minVectors, vecAverage, mostFrequent, node);
+        }
+    } else {
+        for (auto it = nodes.begin(); it != nodes.end(); it++) {
+            lemon::SmartDigraphBase::Node &node = *it;
+            sub_generation_method(treeToGraphMorphism, tree, morphismInv, minVectors, vecAverage, mostFrequent, node);
+        }
+    }
+
+#if 0
     for (auto it = nodes.rbegin(); it != nodes.rend(); it++) {
-        size_t nId = g.id(*it);
+
+        lemon::SmartDigraphBase::Node &node = *it;
+        sub_generation_method(treeToGraphMorphism, tree, morphismInv, minVectors,vecAverage, mostFrequent, node);
+
+
+        size_t nId = g.id(node);
+        std::string label = getName(invMap.at(nId));
+        std::cout << label << std::endl;
 
         // Checking whether the current element has multiple parents in the dag: if that's the case, then the current
         // node shall be decomposed in as many vectors as many possible parents, thus making as many vectors as many
         // possible paths from the root.
         size_t isMax = 0;
-        for (const auto& parent : g.inArcs(*it)) {
+        for (const auto& parent : g.inArcs(node)) {
             const auto& it = morphismInv.find(g.id(g.source(parent)));
             assert(it != morphismInv.end());
             isMax+=it->second.size();
@@ -107,7 +128,7 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
                       .getKey(nId) << std::endl;
         }
 
-        for (const auto& parent : g.inArcs(*it)) {
+        for (const auto& parent : g.inArcs(node)) {
             const auto& ita = morphismInv.find(g.id(g.source(parent)));
             assert(ita != morphismInv.end());
             for (const size_t& parentMaps : ita->second) {
@@ -127,13 +148,14 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
 
         // Determining which are the leaves: those will be used for the testing
         bool isLeaf = true;
-        for (const auto& descendants : g.outArcs(*it)) {
+        for (const auto& descendants : g.outArcs(node)) {
             isLeaf = false;
             break;
         }
         if (isLeaf)
-            internalLeafCandidates.insert(nId);
-    }
+
+    } internalLeafCandidates.insert(nId);
+#endif
 
     height = generateAllPathIds(rootId, tree, {}, treeIdToPathString, 1);
 
@@ -162,6 +184,7 @@ size_t Graph::generateNaryTree(std::unordered_map<size_t, size_t> &treeToGraphMo
 
     std::cout << "Johnson (trivial) algorithm for all the possible pairs" << std::endl;
     johnsonAlgorithm();
+    return maxBranch;
 
 }
 
@@ -207,6 +230,7 @@ Graph::Graph(const std::string &filename) : Graph{} {
 
 void Graph::johnsonAlgorithm(bool storeFile) {
     size_t count = 0;
+    if (!transitive_closure_map.empty()) return;
     std::string johnson = filename+"_out.csv";
 
     if (storeFile && exists(johnson)) {
@@ -317,13 +341,14 @@ Graph::Graph(std::vector<Graph> &graph_collections) : Graph{} {
             Graph& g = graph_collections[candidate_pos];
 
             // Getting if the two elements are connected in the original graph: only in this case, I'm going to create the edge in the lattice
-            if (g.hasEdge(u_vector[candidate_pos], v_vector[candidate_pos])) {
+            if (size_t cost = g.hasEdge(u_vector[candidate_pos], v_vector[candidate_pos])) {
                 //addNewEdge(u, v,  1);
-//                std::cout << "for graph #" << candidate_pos << ", ";
-//                std::cout << getName(u) << "-->" <<
-//                          getName(v) << " ## " <<  u_vector[candidate_pos] << "~>" << v_vector[candidate_pos]<< std::endl;
+                /*std::cout << "for graph #" << candidate_pos << ", ";
+                std::cout << getName(u) << "-->" <<
+                          getName(v) << " ## " <<  u_vector[candidate_pos] << "~>" << v_vector[candidate_pos]<< std::endl;
+*/
 
-                addNewEdge( u,v,  1);
+                //addNewEdge( u, v,  cost);
                 //graph_collections[candidate_pos].print_graph();
                 //return ;
                 /*std::cout << "for graph #" << candidate_pos << " ";
@@ -350,16 +375,18 @@ void Graph::print_graph() {
     while (itx != itf) {
         std::cout <<
                   fileElementNameToId.getKey(
-                          invMap.at(lemon::SmartDigraph::id(g.source(itx)))) << "-->"
+                          invMap.at(lemon::SmartDigraph::id(g.target(itx)))) << " "
                   <<            fileElementNameToId.getKey(
-                          invMap.at(lemon::SmartDigraph::id(g.target(itx)))) << std::endl;
+                          invMap.at(lemon::SmartDigraph::id(g.source(itx)))) << " 1"<< std::endl;
         itx++;
     }
 }
 
-bool Graph::hasEdge(size_t src, size_t dst) const {
-    return
-            lemon::findArc(g, lemon::SmartDigraph::nodeFromId(src), lemon::SmartDigraph::nodeFromId(dst)) != lemon::INVALID;
+size_t Graph::hasEdge(size_t src, size_t dst) const {
+    auto hasArc =
+            lemon::findArc(g, lemon::SmartDigraph::nodeFromId(src), lemon::SmartDigraph::nodeFromId(dst));
+
+    return hasArc != lemon::INVALID ? costMap[hasArc] : 0;
 }
 
 void Graph::nested_loop_join(const std::vector<size_t> &embedding_id, std::vector<size_t> vector_pos,
@@ -458,16 +485,88 @@ void Graph::test_lattice2(Graph &g1, Graph &g2) {
         size_t uid = cp_cost.first.first;
         size_t vid = cp_cost.first.second;
 
-        auto u = generateNode(invMap.at(uid));
-        auto v = generateNode(invMap.at(vid));
+        std::pair<unsigned long, unsigned long> u = getPair(g1, g2, uid);
+        auto v = getPair(g1, g2, vid); //generateNode(invMap.at(vid));
 
-        assert(cp_cost.second == g1.getCost(u[0], v[0], true) + g2.getCost(u[1], v[1], true));
+        //std::cout << getName(uid) << " --> " << getName(vid) << " " << cp_cost.second << " == [[" << u.first << "," << u.second << "]]=" << g1.getCost(u.first, v.first, true) << " + [[" << v.first << "," << v.second <<"]]="<< g2.getCost(u.second, v.second, true) << std::endl;
+        assert(cp_cost.second == g1.getCost(u.first, v.first, true) + g2.getCost(u.second, v.second, true));
     }
+}
+
+std::pair<unsigned long, unsigned long> Graph::getPair(Graph &g1, Graph &g2, size_t uid) const {
+    std::string uid_s = getName(uid);
+    uid_s = uid_s.substr(1, uid_s.length()-2);
+    unsigned long it = uid_s.find_first_of(',');
+    std::cout << uid_s << "  " << uid_s.substr(0, it) << "  " << uid_s.substr(it+1) << std::endl;
+    auto u = std::make_pair(g1.getId(uid_s.substr(0, it)), g2.getId(uid_s.substr(it+1)));
+    return u;
 }
 
 size_t Graph::getCost(size_t src, size_t dst, bool isNotLemonId) {
     if (src == dst) return 0;
     auto it = transitive_closure_map.find(std::make_pair(isNotLemonId ? nodeMap.at(src) : src, isNotLemonId ? nodeMap.at(dst) : dst));
     return it == transitive_closure_map.end() ? 0 : it->second;
+}
+
+NaryTreeGeneration Graph::generateNaryTree(char *rootNameNode, bool doReverse) {
+    NaryTreeGeneration result;
+    result.maximum_branching_factor = generateNaryTree(result.treeToGraphMorphism, result.tree, result.treeIdToPathString, result.morphismInv, rootNameNode, doReverse);
+    result.number_of_vectors_required = isTree;
+    return result;
+}
+
+void Graph::sub_generation_method(std::unordered_map<size_t, size_t> &treeToGraphMorphism,
+                                  std::unordered_map<size_t, std::unordered_set<size_t>> &tree,
+                                  std::unordered_map<size_t, std::unordered_set<size_t>> &morphismInv,
+                                  size_t &minVectors, size_t &vecAverage, std::map<size_t, size_t> &mostFrequent,
+                                  lemon::SmartDigraph::Node &node) {
+    size_t nId = g.id(node);
+    std::string label = getName(invMap.at(nId));
+    std::cout << label << std::endl;
+
+    // Checking whether the current element has multiple parents in the dag: if that's the case, then the current
+    // node shall be decomposed in as many vectors as many possible parents, thus making as many vectors as many
+    // possible paths from the root.
+    size_t isMax = 0;
+    for (const auto& parent : g.inArcs(node)) {
+        ///std::cerr << g.id(parent) << "~" << getName(invMap[g.id(parent)]) << " is the parent of " << g.id(node) << "~" << getName(invMap[g.id(node)]) << std::endl;
+        const auto& it = morphismInv.find(g.id(g.source(parent)));
+        assert(it != morphismInv.end());
+        isMax+=it->second.size();
+        if (isMax > 1) break;
+    }
+
+    if (isMax > 1) {
+        std::cout <<
+                  fileElementNameToId
+                          .getKey(nId) << std::endl;
+    }
+
+    for (const auto& parent : g.inArcs(node)) {
+        const auto& ita = morphismInv.find(g.id(g.source(parent)));
+        assert(ita != morphismInv.end());
+        for (const size_t& parentMaps : ita->second) {
+            size_t currentVertex = (isMax <= 1) ? nId : ++maxCurrentNode;
+            treeToGraphMorphism[currentVertex] = nId;
+            morphismInv[nId].insert(currentVertex);
+            tree[parentMaps].insert(currentVertex);
+            maxBranch = std::max(maxBranch, tree[parentMaps].size());
+        }
+        isTree = std::max(isTree, morphismInv[nId].size());
+        minVectors = std::min(minVectors, morphismInv[nId].size());
+    }
+    vecAverage += morphismInv[nId].size();
+    auto it2 = mostFrequent.insert(std::make_pair(morphismInv[nId].size(), 1));
+    if (!it2.second)
+        it2.first->second++;
+
+    // Determining which are the leaves: those will be used for the testing
+    bool isLeaf = true;
+    for (const auto& descendants : g.outArcs(node)) {
+        isLeaf = false;
+        break;
+    }
+    if (isLeaf)
+        internalLeafCandidates.insert(nId);
 }
 

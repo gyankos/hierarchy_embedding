@@ -138,6 +138,7 @@ void parhier_testing(size_t maximumBranchingFactor, size_t maximumHeight, std::o
 #include <tests/graph/TestingGraphBasic2.h>
 #include <tests/graph/TestingGraphBasic3.h>
 #include <tests/graph/TestingGraphExternal.h>
+#include <GraphLatticeFromDimensionCollection.h>
 //#include <tests/graph/TestingGraphBasic1.h>
 #include "Graph.h"
 #include "tests/graph/TestingGraphProposal.h"
@@ -207,21 +208,30 @@ void test_lattice() {
     //graph_vector[0].print_graph();
     //return 0;
     std::cout << " --- Graph Lattice --- " << std::endl;
-    Graph lattice{graph_vector};
+    GraphLatticeFromDimensionCollection lattice_generator;
+    lattice_generator.generate("testing2.txt", graph_vector);
+    Graph lattice{"testing2.txt"};
+    lattice.embedding_id = lattice_generator.embedding_id;
+    //Graph lattice{graph_vector};
     //lattice.print_graph();
 
     graph_vector[0].johnsonAlgorithm(false);
+    std::cout << graph_vector[0].generateNaryTree(nullptr) << std::endl;
+
     graph_vector[1].johnsonAlgorithm(false);
+    std::cout << graph_vector[1].generateNaryTree(nullptr) << std::endl;
+
     lattice.johnsonAlgorithm(false);
+    std::cout << lattice.generateNaryTree(nullptr) << std::endl;
 
     lattice.test_lattice2(graph_vector[0], graph_vector[1]);
 }
 
 int main() {
-    //test_lattice();
+    test_lattice();
 
-    complete_tree_benchmarking();
-    mammals_graph_tests();
+    //complete_tree_benchmarking();
+    //mammals_graph_tests();
 
     /*std::vector<std::vector<std::vector<size_t>>> ls = generateCompleteSubgraph(7, 5);
     TestingProposal testing_dimension_as_branching{7, 3, 2, 5};

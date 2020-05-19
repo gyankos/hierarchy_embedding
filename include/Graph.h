@@ -79,12 +79,12 @@ namespace std {
     };
 }
 
+#include <NaryTreeGeneration.h>
+
 class Graph {
-    std::vector<size_t> embedding_id;
     size_t rootId;
     lemon::SmartDigraph g;
     std::string filename;
-    std::unordered_map<size_t, size_t> nodeMap; // maps a node id to a lemon graph id
     std::unordered_map<size_t, size_t> invMap;
     std::unordered_map<std::pair<size_t,size_t>, size_t> transitive_closure_map;
     lemon::SmartDigraph::ArcMap<int> costMap;
@@ -113,15 +113,25 @@ class Graph {
 
     size_t addNewNode(size_t id);
     void addNewEdge(size_t src, size_t dst, int weight);
-    bool hasEdge(size_t src, size_t dst) const;
     Graph();
 
     void nested_loop_join(const std::vector<size_t>& embedding_id, std::vector<size_t> vector_pos, std::vector<Graph>& graph_collections);
 
     std::vector<size_t> generateNode(size_t v) const;
 
+    void sub_generation_method(std::unordered_map<size_t, size_t>& treeToGraphMorphism,
+                               std::unordered_map<size_t, std::unordered_set<size_t>>& tree,
+                               std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv,
+                               size_t& minVectors,
+                               size_t& vecAverage,
+                               std::map<size_t,size_t>& mostFrequent,
+                               lemon::SmartDigraph::Node& node);
+
 public:
 
+    size_t hasEdge(size_t src, size_t dst) const;
+    std::vector<size_t> embedding_id;
+    std::unordered_map<size_t, size_t> nodeMap; // maps a node id to a lemon graph id
     // Getting which is the maximal branching factor of the graph: this is required for the basic metric
     // determining the vectorial size
     size_t maxBranch = std::numeric_limits<size_t>::min();
@@ -157,7 +167,10 @@ public:
      * @return                  Maximum branching factor of the associated tree
      */
     size_t generateNaryTree(std::unordered_map<size_t, size_t>& treeToGraphMorphism, std::unordered_map<size_t, std::unordered_set<size_t>>& tree, std::map<size_t, std::string>& treeIdToPathString,
-                            std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv, char* rootNameNode = nullptr);
+                            std::unordered_map<size_t, std::unordered_set<size_t>>& morphismInv, char* rootNameNode = nullptr, bool doReverse = true);
+
+    NaryTreeGeneration generateNaryTree(char *rootNameNode, bool doReverse = true);
+
     const std::set<size_t>& getCandidates();
 
     size_t getCost(size_t src, size_t dst, bool isNotLemonId = false);
@@ -208,6 +221,8 @@ public:
     void print_graph();
 
     std::vector<size_t> getChildren(size_t i);
+
+    std::pair<unsigned long, unsigned long> getPair(Graph &g1, Graph &g2, size_t uid) const;
 };
 
 
