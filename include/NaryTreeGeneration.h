@@ -17,6 +17,10 @@ struct NaryTreeGeneration {
     size_t maximum_branching_factor;
     size_t number_of_vectors_required;
 
+    NaryTreeGeneration() = default;
+    NaryTreeGeneration(const NaryTreeGeneration& ) = default;
+    NaryTreeGeneration& operator=(const NaryTreeGeneration& ) = default;
+
     friend std::ostream &operator<<(std::ostream &os, const NaryTreeGeneration &generation) {
         os << "maximum_branching_factor: " << generation.maximum_branching_factor << " number_of_vectors_required: "
            << generation.number_of_vectors_required;

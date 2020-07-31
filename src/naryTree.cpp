@@ -49,9 +49,9 @@ void naryTree::setBasicTreeVector2(std::vector<double> &vector, size_t parentSiz
 }
 
 void naryTree::setBasicTreeVector3(std::vector<double> &vector, size_t parentSize, std::function<double(double)> fun,
-                                   double levelFactor, size_t level) {
+                                   double alpha, size_t level) {
     //std::cout << levelFactor << "^" << level << "*" << parentSize << " = " << std::pow(levelFactor, level) * parentSize<< std::endl;
-    vector[id] = std::pow(levelFactor, level) * fun(parentSize);
+    vector[id] = std::pow(alpha, level) * fun(parentSize);
     for (auto& child: children)
-        child.setBasicTreeVector3(vector, children.size(), fun, levelFactor, level+1);
+        child.setBasicTreeVector3(vector, children.size(), fun, alpha, level + 1);
 }

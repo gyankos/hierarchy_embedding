@@ -29,7 +29,7 @@ struct result_map {
     }
 
     friend std::ostream &operator<<(std::ostream &os, const result_map &map) {
-        os << map.spearman << "," << map.precision_leqK << "," << map.recall_gtK << ',' << map.milliseconds;
+        os << map.spearman << " (spe)," << map.precision_leqK << " (prec)," << map.recall_gtK << " (rec)," << map.milliseconds;
         return os;
     }
 };

@@ -38,7 +38,7 @@ Now Computing...
  */
 template <class T> void perform_test(size_t maxBranch, size_t maxHeight, T function) {
     std::ofstream file{};
-    file.open("final_experiments_poinc.csv", std::ios::out | std::ios::app);
+    file.open("test2.csv", std::ios::out | std::ios::app);
     for (size_t i =/* 2*/2; i<=maxBranch; i+=2) {
         for (size_t j = /*2*/2; j<=maxHeight; j++) {
             function(i, j, file);
@@ -193,7 +193,7 @@ void mammals_graph_tests() {
 
 void complete_tree_benchmarking() {
 
-    std::cout << "Proposal" << std::endl;
+    /*std::cout << "Proposal" << std::endl;
     perform_test(7, 5, test_proposal);
 
     std::cout << "Poincarré" << std::endl;
@@ -211,7 +211,7 @@ void complete_tree_benchmarking() {
     std::cout << "Basic" << std::endl;
     perform_test(7, 5, basic_testing);
     std::cout << "ParHier" << std::endl;
-    perform_test(7, 5, parhier_testing);
+    perform_test(7, 5, parhier_testing);*/
     std::cout << "Learning" << std::endl;
     perform_test(7, 5, testing_learning);
 }
@@ -230,29 +230,41 @@ void test_lattice() {
     //graph_vector[0].print_graph();
     //return 0;
     std::cout << " --- Graph Lattice --- " << std::endl;
+
+    // Generating the graph from the lattice
+    std::string lattice_file = "hierarchy_lattice.txt";
     GraphLatticeFromDimensionCollection lattice_generator;
-    lattice_generator.generate("testing2.txt", graph_vector);
-    Graph lattice{"testing2.txt"};
+    lattice_generator.generate(lattice_file, graph_vector);
+    Graph lattice{lattice_file};
     lattice.embedding_id = lattice_generator.embedding_id;
     //Graph lattice{graph_vector};
     //lattice.print_graph();
 
     graph_vector[0].johnsonAlgorithm(false);
-    std::cout << graph_vector[0].generateNaryTree(nullptr) << std::endl;
+    NaryTreeGeneration gv1_results{graph_vector[0].generateNaryTree(nullptr) };
+    std::cout << gv1_results << std::endl;
+    //
+    double cmp0 = gv1_results.maximum_branching_factor * std::pow(gv1_results.number_of_vectors_required, 2);
 
     graph_vector[1].johnsonAlgorithm(false);
-    std::cout << graph_vector[1].generateNaryTree(nullptr) << std::endl;
+    NaryTreeGeneration gv2_results{graph_vector[1].generateNaryTree(nullptr)};
+    std::cout << gv2_results << std::endl;
+    double cmp1 = gv2_results.maximum_branching_factor * std::pow(gv2_results.number_of_vectors_required, 2);
 
     lattice.johnsonAlgorithm(false);
-    std::cout << lattice.generateNaryTree(nullptr) << std::endl;
+    NaryTreeGeneration worstCase{ lattice.generateNaryTree(nullptr)};
+    std::cout << worstCase << std::endl;
+
+    double cmpWC = worstCase.maximum_branching_factor * std::pow(worstCase.number_of_vectors_required, 2);
 
     lattice.test_lattice2(graph_vector[0], graph_vector[1]);
+
+    std::cout << "Given that by the former test the two approaches are equivalent, the decomposed approach will make us do a speedup of at most " << cmpWC << "/" << "(" << cmp0 << "+" << cmp1 << ") = " << (cmpWC)/(cmp0+cmp1) << " when all the vectors have the same number of elements (e.g., on the leaves)" << std::endl;
 }
 
 int main() {
 
     complete_tree_benchmarking();
-    mammals_graph_tests();
 
     return 0;
 }

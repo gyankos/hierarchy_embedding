@@ -399,8 +399,8 @@ void Graph::sub_generation_method(std::unordered_map<size_t, size_t> &treeToGrap
                                   size_t &minVectors, size_t &vecAverage, std::map<size_t, size_t> &mostFrequent,
                                   lemon::SmartDigraph::Node &node) {
     size_t nId = g.id(node);
-    std::string label = getName(invMap.at(nId));
-    std::cout << label << std::endl;
+    //std::string label = getName(invMap.at(nId));
+    //std::cout << label << std::endl;
 
     // Checking whether the current element has multiple parents in the dag: if that's the case, then the current
     // node shall be decomposed in as many vectors as many possible parents, thus making as many vectors as many

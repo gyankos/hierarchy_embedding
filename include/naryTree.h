@@ -39,7 +39,7 @@ public:
 
     void setBasicTreeVector2(std::vector<double> &vector, size_t parentSize, std::function<double(double)> fun);
 
-    void setBasicTreeVector3(std::vector<double> &vector, size_t parentSize, std::function<double(double)> fun, double levelFactor, size_t level);
+    void setBasicTreeVector3(std::vector<double> &vector, size_t parentSize, std::function<double(double)> fun, double alpha, size_t level);
 
 private:
     size_t addChild(const std::vector<size_t> &path, size_t pathPos, size_t &global_counter);

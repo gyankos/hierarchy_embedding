@@ -118,9 +118,9 @@ HierarchyLearning::AccumulateCategoryGradient(const float coeff, const int entit
 
 void HierarchyLearning::Solve_single(std::vector<Datum> &minibatch) {
     float update_coeff = learning_rate / minibatch.size();
-    for (size_t epoch = 0; epoch < num_epoch_on_batch; ++epoch) {
+    for (size_t epoch = 0; epoch < num_epoch_on_batch; ++epoch) { // e*
         // 1) Metric aggregation (lines 4 -- 8)
-        for (int d = 0; d < minibatch.size(); ++d) {
+        for (int d = 0; d < minibatch.size(); ++d) { // b *
             // Postive data metric aggregation
             minibatch[d].category_path().RefreshAggrDistMetric(categoriesB);
 

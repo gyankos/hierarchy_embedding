@@ -68,7 +68,8 @@ size_t TestingTreeLearning::getVectorRepresentation(const std::vector<size_t> &c
 double TestingTreeLearning::similarity(const size_t &lhs, const size_t &rhs) {
     Path path = ee_engine_->entity_category_hierarchy().FindPathBetweenEntities(lhs, rhs);
     path.RefreshAggrDistMetric(trainer->copyCategories());
-    return trainer->ComputeDist(lhs, rhs, path);
+    double dist = trainer->ComputeDist(lhs, rhs, path);
+    return 1-(dist/(dist+1));
 }
 
 void TestingTreeLearning::generateTopKCandidates(PollMap<double, std::string> &map, const std::vector<size_t> &current) {
