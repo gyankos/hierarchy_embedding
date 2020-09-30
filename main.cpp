@@ -264,7 +264,7 @@ void test_lattice() {
 
 int main() {
 
-    complete_tree_benchmarking();
+    test_lattice();
 
     return 0;
 }
