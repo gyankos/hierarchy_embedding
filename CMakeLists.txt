@@ -9,7 +9,7 @@ include_directories(include)
 
 add_subdirectory(submodules/lemon)
 include_directories(submodules/lemon)
-include_directories(cmake-build-debug/submodules/lemon)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/submodules/lemon)
 
 add_library(EuclideanEmbedding src/Graph.cpp src/naryTree.cpp src/cout_utils.cpp src/ExportGraphEmbeddings.cpp src/tests/graph/TestingGraphProposal.cpp src/proposal/Proposal.cpp src/string_utils.cpp src/proposal/proposal_utils.cpp src/multithreaded/thread_pool.cpp)
 
