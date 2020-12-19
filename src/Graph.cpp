@@ -196,6 +196,7 @@ const std::set<size_t> &Graph::getCandidates() {
 
 Graph::Graph() : costMap{g}, /*dfs{g}, dij{g, costMap},*/ rm{g} {
    // dfs.reachedMap(rm);
+    this->filename = "";
 }
 
 Graph::Graph(const std::string &filename) : Graph{} {
@@ -208,7 +209,8 @@ Graph::Graph(const std::string &filename) : Graph{} {
     size_t count = 0;
 
     while (file >> child >> parent >> score) {
-        size_t childId, parentId; //ensuring that the root will be the one with id 0
+        addEdgeExternally(child,parent, count, branchingEvaluator, score);
+        /*size_t childId, parentId; //ensuring that the root will be the one with id 0
         if ((parentId = fileElementNameToId.putWithKeyCheck(parent, count)) == count) {
             addNewNode(count++);
         }
@@ -222,7 +224,7 @@ Graph::Graph(const std::string &filename) : Graph{} {
         } else {
             maxBranch = std::max(++it->second, maxBranch);
         }
-        addNewEdge(parentId, childId, score);
+        addNewEdge(parentId, childId, score);*/
         /*if (childId == 22708 || parentId == 22708)*/
             //std::cout << child << "(" << childId << "~" << nodeMap[childId] <<  ")  --[" << score << "]--> " << parent << "(" << parentId << "~" << nodeMap[parentId] <<  ")" <<  std::endl;
     }
@@ -454,5 +456,24 @@ std::string Graph::getName(size_t id) const {
 
 size_t Graph::getId(const std::string &name) {
     return fileElementNameToId.getValue(name);
+}
+
+void Graph::addEdgeExternally(const std::string &child, const std::string &parent, size_t &count,
+                              std::unordered_map<size_t, size_t> &branchingEvaluator, double score) {
+    size_t childId, parentId; //ensuring that the root will be the one with id 0
+    if ((parentId = fileElementNameToId.putWithKeyCheck(parent, count)) == count) {
+        addNewNode(count++);
+    }
+    if ((childId = fileElementNameToId.putWithKeyCheck(child, count)) == count) {
+        addNewNode(count++);
+    }
+    auto it = branchingEvaluator.find(parentId);
+    if (it == branchingEvaluator.end()) {
+        maxBranch = std::max(maxBranch, (size_t)1);
+        branchingEvaluator.insert(std::make_pair(parentId, 1));
+    } else {
+        maxBranch = std::max(++it->second, maxBranch);
+    }
+    addNewEdge(parentId, childId, score);
 }
 

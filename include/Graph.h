@@ -111,7 +111,7 @@ class Graph {
 
     size_t addNewNode(size_t id);
     void addNewEdge(size_t src, size_t dst, int weight);
-    Graph();
+
 
     void sub_generation_method(std::unordered_map<size_t, size_t>& treeToGraphMorphism,
                                std::unordered_map<size_t, std::unordered_set<size_t>>& tree,
@@ -133,6 +133,9 @@ class Graph {
     std::pair<unsigned long, unsigned long> getPair(Graph &g1, Graph &g2, size_t uid) const;
 
 public:
+
+    Graph();
+    void addEdgeExternally(const std::string& child, const std::string& parent, size_t& count, std::unordered_map<size_t, size_t>& branchingEvaluator, double score = 1.0);
 
     size_t hasEdge(size_t src, size_t dst) const;
     std::vector<size_t> embedding_id;

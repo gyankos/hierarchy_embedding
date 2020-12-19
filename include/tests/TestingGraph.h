@@ -80,8 +80,7 @@ protected:
 public:
     TestingGraph(Graph& ref) : passGraph{ref} {}
 
-
-    void run(bool isMultithreaded, char* rootName = nullptr) {
+    void initializeEmbeddingGeneration(char* rootName = nullptr) {
         treeToGraphMorphism.clear();
         morphismInv.clear();
         tree.clear();
@@ -92,7 +91,10 @@ public:
         maximumBranchingFactor = passGraph.maxBranch;
         maximumHeight = passGraph.height;
         passGraphDataIfRequired(passGraph);
+    }
 
+    void run(bool isMultithreaded, char* rootName = nullptr) {
+        initializeEmbeddingGeneration(rootName);
         double path_length_size = 0, spearman = 0,  precision_leqK = 0,  precision_narrow = 0, ncdg = 0, smallerNotCandidate = 0, recall_gtK =0;
 
         size_t threadNo = (unsigned int)std::thread::hardware_concurrency();
@@ -139,7 +141,6 @@ public:
         std::cout << "Time (milliseconds) " << fp_ms.count() / path_length_size << std::endl;
     }
 
-protected:
     virtual ForComparison getVectorRepresentation(const size_t& current) const = 0;
     std::function<ForComparison(size_t)> getVRLambda() const {
         return [this](size_t x) {
@@ -147,6 +148,7 @@ protected:
         };
     }
 
+protected:
     virtual double similarity(const ForComparison& lhs, const ForComparison& rhs) const = 0;
     std::function<double(const ForComparison&,const ForComparison&)> exportSimilarity() const {
         return [this](const ForComparison& x,const ForComparison& y) {
