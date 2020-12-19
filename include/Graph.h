@@ -132,9 +132,13 @@ class Graph {
      */
     std::pair<unsigned long, unsigned long> getPair(Graph &g1, Graph &g2, size_t uid) const;
 
+    void copy(const Graph &x);
+
 public:
 
     Graph();
+    Graph(const Graph& x);
+    void clear();
     void addEdgeExternally(const std::string& child, const std::string& parent, size_t& count, std::unordered_map<size_t, size_t>& branchingEvaluator, double score = 1.0);
 
     size_t hasEdge(size_t src, size_t dst) const;

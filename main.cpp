@@ -146,6 +146,7 @@ void parhier_testing(size_t maximumBranchingFactor, size_t maximumHeight, std::o
 //#include <tests/graph/TestingGraphBasic1.h>
 #include "Graph.h"
 #include "tests/graph/TestingGraphProposal.h"
+#include "ExportGraphEmbeddings.h"
 
 void mammals_graph_tests() {
     /// XXX: important: cannot test with Basic metric, because it takes more than 64GB of primary memory to represent that: too computational inefficient to represent
@@ -264,7 +265,20 @@ void test_lattice() {
 
 int main() {
 
-    test_lattice();
+    ///test_lattice();
+
+    ExportGraphEmbeddings graph;
+    graph.prepareForNewHierarchy();
+    graph.addHierarchyEdge("B", "A");
+    graph.addHierarchyEdge("C", "A");
+    graph.addHierarchyEdge("D", "B");
+    graph.addHierarchyEdge("D", "C");
+    graph.finalizeForEmbeddingGeneration();
+
+    std::cout << graph.getPathRepresentation("A") << std::endl;
+    std::cout << graph.getPathRepresentation("B") << std::endl;
+    std::cout << graph.getPathRepresentation("C") << std::endl;
+    std::cout << graph.getPathRepresentation("D") << std::endl;
 
     return 0;
 }

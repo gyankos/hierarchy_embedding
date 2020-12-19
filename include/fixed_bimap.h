@@ -53,6 +53,12 @@ public:
     fixed_bimap(fixed_bimap&& ) = default;
     fixed_bimap& operator=(const fixed_bimap&) = default;
 
+    void clear() {
+        map.clear();
+        elements.clear();
+        size = 0;
+    }
+
     /**
      * Always assumes that the key and the value are always with a bimap.
      * This method is implemented to reduce the amounts of checks for a boolean variable.

@@ -18,9 +18,9 @@ class TestingGraphProposal : public TestingGraph<std::vector<std::vector<size_t>
 public:
     TestingGraphProposal( double distanceFactor, double decayFactor, Graph &ref);
     ~TestingGraphProposal();
+    std::vector<std::vector<size_t>> getVectorRepresentation(const size_t &current) const override;
 
 protected:
-    std::vector<std::vector<size_t>> getVectorRepresentation(const size_t &current) const override;
     double similarity(const std::vector<std::vector<size_t>> &lhs, const std::vector<std::vector<size_t>> &rhs) const override;
     void passGraphDataIfRequired(const Graph &graph) override;
 };

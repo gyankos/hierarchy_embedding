@@ -315,6 +315,8 @@ size_t Graph::hasEdge(size_t src, size_t dst) const {
 }
 
 Graph::Graph(Graph &&x) : Graph{} {
+    copy(x);
+#if 0
     //std::cout << "copying...." << std::endl;
     //x.print_graph();
     //std::cout << "-----------" << std::endl;
@@ -357,6 +359,7 @@ Graph::Graph(Graph &&x) : Graph{} {
     //lemon::DigraphCopy(x.g, g).run();
    // print_graph();
    // return ;
+#endif
 
 }
 
@@ -476,4 +479,63 @@ void Graph::addEdgeExternally(const std::string &child, const std::string &paren
     }
     addNewEdge(parentId, childId, score);
 }
+
+void Graph::copy(const Graph &x) {
+    //std::cout << "copying...." << std::endl;
+    //x.print_graph();
+    //std::cout << "-----------" << std::endl;
+    rootId = x.rootId;
+    filename = x.filename;
+    ///nodeMap = x.nodeMap;
+    ///invMap = x.invMap;
+    ///transitive_closure_map = x.transitive_closure_map;
+    ///maxCurrentNode = x.maxCurrentNode;
+    ///maxLength = x.maxLength;
+    ///internalLeafCandidates = x.internalLeafCandidates;
+    maxBranch = x.maxBranch;
+    height = x.height;
+    isTree = x.isTree;
+    ///fileElementNameToId = x.fileElementNameToId;
+    {
+        std::vector<size_t> nodes;
+        for (const auto& cp: x.nodeMap) {
+            nodes.emplace_back(cp.first);
+        }
+        std::sort(nodes.begin(), nodes.end());
+        for (size_t g_id : nodes) {
+            addNewNode(g_id);
+            fileElementNameToId.put(x.fileElementNameToId.getKey(g_id), g_id);
+        }
+    }
+
+    {
+        auto ite = x.g.arcs();
+        auto iteb = ite.begin(), itee = ite.end();
+        while (iteb != itee) {
+            addNewEdge(
+                    x.invMap.at(lemon::SmartDigraph::id(x.g.source(iteb))),
+                    x.invMap.at(lemon::SmartDigraph::id(x.g.target(iteb))),
+                    x.costMap[iteb]);
+            iteb++;
+        }
+    }
+}
+
+void Graph::clear() {
+    filename = "";
+    g.clear();
+    invMap.clear();
+    transitive_closure_map.clear();
+    maxCurrentNode = std::numeric_limits<size_t>::min();
+    maxLength = std::numeric_limits<size_t>::min();
+    internalLeafCandidates.clear();
+    isTree = std::numeric_limits<size_t>::min();
+    fileElementNameToId.clear();
+    embedding_id.clear();
+    nodeMap.clear();
+    maxBranch = std::numeric_limits<size_t>::min();
+    height = std::numeric_limits<size_t>::min();
+}
+
+Graph::Graph(const Graph &x) : Graph{} { copy(x); }
 
